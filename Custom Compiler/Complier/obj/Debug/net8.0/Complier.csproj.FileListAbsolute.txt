@@ -1,0 +1,14 @@
+/Users/jude/Documents/Coding/Custom Compiler/Complier/bin/Debug/net8.0/Complier
+/Users/jude/Documents/Coding/Custom Compiler/Complier/bin/Debug/net8.0/Complier.deps.json
+/Users/jude/Documents/Coding/Custom Compiler/Complier/bin/Debug/net8.0/Complier.runtimeconfig.json
+/Users/jude/Documents/Coding/Custom Compiler/Complier/bin/Debug/net8.0/Complier.dll
+/Users/jude/Documents/Coding/Custom Compiler/Complier/bin/Debug/net8.0/Complier.pdb
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/Complier.GeneratedMSBuildEditorConfig.editorconfig
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/Complier.AssemblyInfoInputs.cache
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/Complier.AssemblyInfo.cs
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/Complier.csproj.CoreCompileInputs.cache
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/Complier.dll
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/refint/Complier.dll
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/Complier.pdb
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/Complier.genruntimeconfig.cache
+/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/Debug/net8.0/ref/Complier.dll
