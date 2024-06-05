@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/jude/Documents/Coding/Custom Compiler/Complier/Complier.csproj": {}
+    "/Users/jude/Documents/Coding/Turquoise/Custom Compiler/Complier/Complier.csproj": {}
   },
   "projects": {
-    "/Users/jude/Documents/Coding/Custom Compiler/Complier/Complier.csproj": {
+    "/Users/jude/Documents/Coding/Turquoise/Custom Compiler/Complier/Complier.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/jude/Documents/Coding/Custom Compiler/Complier/Complier.csproj",
+        "projectUniqueName": "/Users/jude/Documents/Coding/Turquoise/Custom Compiler/Complier/Complier.csproj",
         "projectName": "Complier",
-        "projectPath": "/Users/jude/Documents/Coding/Custom Compiler/Complier/Complier.csproj",
+        "projectPath": "/Users/jude/Documents/Coding/Turquoise/Custom Compiler/Complier/Complier.csproj",
         "packagesPath": "/Users/jude/.nuget/packages/",
-        "outputPath": "/Users/jude/Documents/Coding/Custom Compiler/Complier/obj/",
+        "outputPath": "/Users/jude/Documents/Coding/Turquoise/Custom Compiler/Complier/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/jude/.nuget/NuGet/NuGet.Config"

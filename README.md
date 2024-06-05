@@ -1,2 +1,2 @@
 # Turquoise
-Compiler for custom language Turquoise
+Compiler for custom Turquoise language

@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = Complier
-build_property.ProjectDir = /Users/jude/Documents/Coding/Custom Compiler/Complier/
+build_property.ProjectDir = /Users/jude/Documents/Coding/Turquoise/Custom Compiler/Complier/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
