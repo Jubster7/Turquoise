@@ -12,3 +12,4 @@
 /Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/Turquoise Compiler.pdb
 /Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/Turquoise Compiler.genruntimeconfig.cache
 /Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/ref/Turquoise Compiler.dll
+/Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/Turquoise Compiler.sourcelink.json
