@@ -1,2 +1,2 @@
 # Turquoise
-Compiler for custom Turquoise language
+Compiler for custom language: Turquoise written in c#
