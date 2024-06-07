@@ -1,1 +1,2 @@
-exit 9
+var x = 1;
+exit(x);

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using System.Diagnostics.Contracts;
 
 namespace Compiler;
 
@@ -6,71 +6,92 @@ public enum TokenType {
 	exit,
 	int_literal,
 	semi,
+	open_parentheses,
+	close_parentheses,
+	identifier,
+	var,
+	equals
 }
 
 public struct Token {
+/* 	public Token (TokenType type, string? value = null) {
+		this.type = type;
+		this.value = value;
+	} */
+
 	public TokenType type;
 	public string? value;
-
-	public Token (TokenType _type, string? _value = null) {
-		type = _type;
-		value = _value;
-	}
 }
 
 
 #pragma warning disable CS8629 // Nullable value type may be null.
 static class Tokenizer {
 
-    public static List<Token> Tokenize(string file_contents) {
+	public static List<Token> Tokenize(string file_contents) {
 
 		int index = 0;
 
-		[System.Diagnostics.Contracts.Pure] char? peek(int offset = 1) {
-			if (index + offset > file_contents.Length ) {
+		[Pure] char? peek(int offset = 0) {
+			if (index + offset >= file_contents.Length ) {
 				return null;
 			}
-			return file_contents[index];
+			return file_contents[index + offset];
 		}
+
 		char consume() {
 			return file_contents[index++];
 		}
+
 		string buffer = string.Empty;
 		static void clear(ref string input) {
 			input = string.Empty;
 		}
 
 
+
 		List<Token> tokens = [];
 		while (peek().HasValue) {
-            if (char.IsLetter(peek().Value)) {
+			if (char.IsLetter(peek().Value)) {
 				buffer += consume();
-                while (peek().HasValue && char.IsLetterOrDigit(peek().Value)) {
+				while (peek().HasValue && char.IsLetterOrDigit(peek().Value)) {
 					buffer += consume();
 				}
-                if (buffer == "exit") {
-					tokens.Add(new Token(TokenType.exit));
+				if (buffer == "exit") {
+					tokens.Add(new Token { type = TokenType.exit });
+					clear(ref buffer);
+				} else if (buffer == "var") {
+					tokens.Add(new Token {type = TokenType.var});
 					clear(ref buffer);
 				} else {
-					throw new Exception("Error: Undeclared Identifier: `" + buffer + "`");
+					tokens.Add(new Token {type = TokenType.identifier, value = buffer});
+					clear(ref buffer);
 				}
 			} else if (char.IsDigit(peek().Value)) {
-                buffer += consume();
+				buffer += consume();
 				while (peek().HasValue && char.IsDigit(peek().Value)) {
 					buffer += consume();
 				}
-				tokens.Add(new Token(TokenType.int_literal, buffer));
+				tokens.Add(new Token { type = TokenType.int_literal, value = buffer });
 				clear(ref buffer);
+			} else if (peek().Value == '(') {
+				consume();
+				tokens.Add(new Token { type = TokenType.open_parentheses });
+			} else if (peek().Value == ')') {
+				consume();
+				tokens.Add(new Token { type = TokenType.close_parentheses});
 			} else if ( peek().Value == ';') {
 				consume();
-				tokens.Add(new Token(TokenType.semi));
+				tokens.Add(new Token { type = TokenType.semi});
+			} else if ( peek().Value == '=') {
+				consume();
+				tokens.Add(new Token { type = TokenType.equals});
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {
 				throw new Exception("Error: Invalid Character: `" + peek() + "`");
 			}
 		}
-        return tokens;
+		return tokens;
 	}
 }
 #pragma warning restore CS8629 // Nullable value type may be null.

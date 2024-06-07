@@ -13,3 +13,6 @@
 /Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/Turquoise Compiler.genruntimeconfig.cache
 /Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/ref/Turquoise Compiler.dll
 /Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/Turquoise Compiler.sourcelink.json
+/Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/Turquoise Compiler.csproj.AssemblyReference.cache
+/Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/bin/Debug/net8.0/OneOf.dll
+/Users/jude/Documents/Coding/Turquoise/Turquoise Compiler/obj/Debug/net8.0/Turquoise Compiler.csproj.CopyComplete
