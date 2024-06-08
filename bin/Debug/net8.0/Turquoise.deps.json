@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "Turquoise/1.0.0": {
+        "dependencies": {
+          "OneOf": "3.0.271"
+        },
+        "runtime": {
+          "Turquoise.dll": {}
+        }
+      },
+      "OneOf/3.0.271": {
+        "runtime": {
+          "lib/netstandard2.0/OneOf.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Turquoise/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "OneOf/3.0.271": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pqpqeK8xQGggExhr4tesVgJkjdn+9HQAO0QgrYV2hFjE3y90okzk1kQMntMiUOGfV7FrCUfKPaVvPBD4IANqKg==",
+      "path": "oneof/3.0.271",
+      "hashPath": "oneof.3.0.271.nupkg.sha512"
+    }
+  }
+}
