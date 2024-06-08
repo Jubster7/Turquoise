@@ -34,7 +34,7 @@ struct NodeProgram() {
 }
 
 static class Parser {
-	public static NodeProgram? Parse(List<Token> tokens) {
+	public static NodeProgram Parse(List<Token> tokens) {
 		NodeExpression? Parse_expression() {
 			if(peek().HasValue && peek().Value.type == TokenType.int_literal) {
 				return new NodeExpression {expression = new NodeExpressionIntLiteral {int_literal = consume()}};
