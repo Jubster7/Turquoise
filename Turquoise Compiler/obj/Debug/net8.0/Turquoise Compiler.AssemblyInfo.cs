@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Turquoise Compiler")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+992e3e792ec8fcd98c893245ba794e0f63c45aae")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+671b8c9fad93fb7aec1f99ee5bdb9f63b8d72102")]
 [assembly: System.Reflection.AssemblyProductAttribute("Turquoise Compiler")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Turquoise Compiler")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
