@@ -49,7 +49,7 @@ static class Parser {
 			if (peek().HasValue && peek().Value.type == TokenType.exit && peek(1).HasValue && peek(1).Value.type == TokenType.open_parentheses) {
 				if (peek().Value.type == TokenType.exit && peek(1).HasValue) {
 					if (peek(1).Value.type != TokenType.open_parentheses) {
-						throw new Exception("Expected `(`");
+						throw new Exception("Error: Expected `(`");
 					}
 					consume();
 					consume();
@@ -63,12 +63,12 @@ static class Parser {
 					if(peek().HasValue && peek().Value.type == TokenType.close_parentheses) {
 						consume();
 					} else {
-						throw new Exception("Expected `)`");
+						throw new Exception("Error: Expected `)`");
 					}
 					if(peek().HasValue && peek().Value.type == TokenType.semi) {
 						consume();
 					} else {
-						throw new Exception("Expected `;`");
+						throw new Exception("Error: Expected `;`");
 					}
 					return new NodesStatement {statement = statementExit};
 				}
@@ -88,7 +88,7 @@ static class Parser {
 				if (peek().HasValue && peek().Value.type == TokenType.semi) {
 					consume();
 				} else {
-					throw new Exception("Expected `;`");
+					throw new Exception("Error: Expected `;`");
 				}
 				return new NodesStatement {statement = statementVar};
 			}
@@ -118,4 +118,3 @@ static class Parser {
 		return program;
 	}
 }
-#pragma warning restore CS8629 // Nullable value type may be null.

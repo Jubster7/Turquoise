@@ -1,10 +1,11 @@
 global _main
 _main:
-	mov rax, 99
-	push rax
-	mov rax, 0x2000001
+	push 255
+	push 99
+	push QWORD [rsp + 8]
+	mov rax, 33554433
 	pop rdi
 	syscall
-	mov rax, 0x2000001
+	mov rax, 33554433
 	mov rdi, 0
 	syscall

@@ -15,3 +15,4 @@
 /Users/jude/Documents/Coding/Turquoise/bin/Debug/net8.0/OneOf.dll
 /Users/jude/Documents/Coding/Turquoise/obj/Debug/net8.0/Turquoise.csproj.AssemblyReference.cache
 /Users/jude/Documents/Coding/Turquoise/obj/Debug/net8.0/Turquoise.csproj.CopyComplete
+/Users/jude/Documents/Coding/Turquoise/obj/Debug/net8.0/Turquoise.sourcelink.json

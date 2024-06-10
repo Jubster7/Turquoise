@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+#pragma warning disable CS8629 // Nullable value type may be null.
 
 namespace Compiler;
 
@@ -13,18 +14,12 @@ public enum TokenType {
 	equals
 }
 
-public struct Token {
-/* 	public Token (TokenType type, string? value = null) {
-		this.type = type;
-		this.value = value;
-	} */
-
+struct Token {
 	public TokenType type;
 	public string? value;
 }
 
 
-#pragma warning disable CS8629 // Nullable value type may be null.
 static class Tokenizer {
 
 	public static List<Token> Tokenize(string file_contents) {
@@ -88,10 +83,9 @@ static class Tokenizer {
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {
-				throw new Exception("Error: Invalid Character: `" + peek() + "`");
+				throw new Exception("Error: Invalid Character `" + peek() + "`");
 			}
 		}
 		return tokens;
 	}
 }
-#pragma warning restore CS8629 // Nullable value type may be null.

@@ -47,8 +47,8 @@ class Program {
 		process.Start();
 		string output = process.StandardOutput.ReadToEnd();
 		string error = process.StandardError.ReadToEnd();
-		if (!string.IsNullOrEmpty(output)) Console.WriteLine($"Output: {output}");
-		if (!string.IsNullOrEmpty(error)) Console.WriteLine($"Error: {error}");
+		if (!string.IsNullOrEmpty(output)) Console.WriteLine($"Command Output: {output}");
+		if (!string.IsNullOrEmpty(error)) Console.WriteLine($"Command Error: {error}");
 		process.WaitForExit();
 	}
 }

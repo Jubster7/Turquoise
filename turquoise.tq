@@ -1,1 +1,3 @@
-exit(99);
+var y = 255;
+var x = 99;
+exit(y);
