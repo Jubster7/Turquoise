@@ -58,7 +58,7 @@ struct NodeProgram() {
 }
 
 static class Parser {
- public static NodeProgram Parse(List<Token> tokens) {
+	public static NodeProgram Parse(List<Token> tokens) {
 
 		NodeTerm? Parse_term() {
 			if(try_consume_out(TokenType.int_literal, out Token? int_literal)) {

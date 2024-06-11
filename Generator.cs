@@ -73,7 +73,7 @@ static class Generator {
 					if (variables.ContainsKey(NodeStatementVar.identifier.value!)) {
 						throw new Exception("Error: Identifier `" + NodeStatementVar.identifier.value + "` is already used");
 					}
-                    variables.Add(NodeStatementVar.identifier.value! , new Variable { stack_location = stack_size });
+					variables.Add(NodeStatementVar.identifier.value! , new Variable { stack_location = stack_size });
 					GenerateExpression(NodeStatementVar.expression);
 				}
 			);
