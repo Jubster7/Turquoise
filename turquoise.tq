@@ -1,3 +1,2 @@
-var y = 255;
-var x = 99;
+var y = 1 + 2 + 3;
 exit(y);

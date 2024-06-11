@@ -6,12 +6,13 @@ namespace Compiler;
 public enum TokenType {
 	exit,
 	int_literal,
-	semi,
+	semicolon,
 	open_parentheses,
 	close_parentheses,
 	identifier,
 	var,
-	equals
+	equals,
+	plus,
 }
 
 struct Token {
@@ -76,10 +77,13 @@ static class Tokenizer {
 				tokens.Add(new Token { type = TokenType.close_parentheses});
 			} else if ( peek().Value == ';') {
 				consume();
-				tokens.Add(new Token { type = TokenType.semi});
+				tokens.Add(new Token { type = TokenType.semicolon});
 			} else if ( peek().Value == '=') {
 				consume();
 				tokens.Add(new Token { type = TokenType.equals});
+			} else if ( peek().Value == '+') {
+				consume();
+				tokens.Add(new Token { type = TokenType.plus});
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {

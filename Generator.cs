@@ -20,15 +20,13 @@ static class Generator {
 		string output = $"global {entry_point_name}\n{entry_point_name}:\n";
 		Dictionary<string, Variable> variables = [];
 
-
-
-		void GenerateExpression(NodeExpression nodeExpression) {
-			nodeExpression.expression.Switch(
-				NodeExpressionIntLiteral => {
-					push(NodeExpressionIntLiteral.int_literal.value + "");
+		void Generate_Term(NodeTerm nodeTerm) {
+			nodeTerm.term.Switch(
+				NodeTermIntLiteral => {
+					push(NodeTermIntLiteral.int_literal.value);
 				},
-				NodeExpressionIdentifier => {
-					var identifier_value = NodeExpressionIdentifier.identifier.value;
+				NodeTermIdentifier => {
+					var identifier_value = NodeTermIdentifier.identifier.value;
 					if (!variables.TryGetValue(identifier_value!, out Variable value)) {
 						throw new Exception("Error: Undeclared identifier `" + identifier_value + "`");
 					}
@@ -37,8 +35,24 @@ static class Generator {
 			);
 		}
 
-		void push(string register) {
-			output += "\tpush " + register +"\n";
+		unsafe void GenerateExpression(NodeExpression nodeExpression) {
+			nodeExpression.expression.Switch(
+				NodeTerm => {
+					Generate_Term(NodeTerm);
+				},
+				NodeBinaryExpression => {
+					GenerateExpression(*NodeBinaryExpression.binary_expression.lhs);
+					GenerateExpression(*NodeBinaryExpression.binary_expression.rhs);
+					pop("rax");
+					pop("rbx");
+					output += "\tadd rax, rbx\n";
+					push("rax");
+				}
+			);
+		}
+
+		void push(string? value) {
+			output += "\tpush " + value +"\n";
 			stack_size++;
 		}
 
