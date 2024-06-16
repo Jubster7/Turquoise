@@ -116,10 +116,18 @@ static class Generator {
 		}
 
 		string create_label() {
-			return "label" + label_count;
+			return "label" + label_count++;
 		}
 
-		void GenerateStatement(in NodeStatement nodesStatement) {
+		void GenerateScope(NodeScope nodeScope) {
+			BeginScope();
+			foreach (NodeStatement statement in nodeScope.statements) {
+				GenerateStatement(statement);
+			}
+			EndScope();
+		}
+
+		unsafe void GenerateStatement(in NodeStatement nodesStatement) {
 			nodesStatement.statement.Switch(
 				NodeStatementExit => {
 					GenerateExpression(NodeStatementExit.expression);
@@ -138,15 +146,17 @@ static class Generator {
 					variables.Add(new Variable { name = identifier_value + "", stack_location = stack_size });
 					GenerateExpression(NodeStatementVar.expression);
 				},
-				NodeStatementScope => {
-					BeginScope();
-					foreach (NodeStatement statement in NodeStatementScope.statements) {
-						GenerateStatement(statement);
-					}
-					EndScope();
+				NodeScope => {
+					GenerateScope(NodeScope);
 				},
 				NodeStatementIf => {
-					throw new NotImplementedException();
+					GenerateExpression(NodeStatementIf.expression);
+					pop("rax");
+					string label = create_label();
+					output += "\ttest rax, rax\n";
+					output += "\tjz " + label + "\n";
+					GenerateStatement(*NodeStatementIf.statement);
+					output += label + ":\n";
 				}
 			);
 		}

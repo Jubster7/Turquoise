@@ -17,13 +17,29 @@ _main:
 	mov rdx, 0
 	div rbx
 	push rax
+	push 0
+	push 1
+	push QWORD [rsp + 8]
+	pop rax
+	pop rbx
+	add rax, rbx
+	push rax
+	pop rax
+	test rax, rax
+	jz label0
+	push 1
+	mov rax, 33554433
+	pop rdi
+	syscall
+	add rsp, 0
+label0:
 	push 5
 	push QWORD [rsp + 8]
 	pop rax
 	pop rbx
 	add rax, rbx
 	push rax
-	push QWORD [rsp + 8]
+	push 1
 	mov rax, 33554433
 	pop rdi
 	syscall

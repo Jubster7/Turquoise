@@ -60,9 +60,9 @@ struct NodeScope {
 	public List<NodeStatement> statements;
 }
 
-struct NodeStatementIf {
+unsafe struct NodeStatementIf {
 	public NodeExpression expression;
-	public NodeScope scope;
+	public NodeStatement* statement;
 }
 
 struct NodeStatementVar {
@@ -229,8 +229,8 @@ static class Parser {
 					Console.Error.WriteLine("Error: Expected `{`");
 					Environment.Exit(0);
 				}
-				return new NodeStatement{statement = ParseScope().Value};
-			} else if (try_consume_out(TokenType.if_, out var if_)) {
+				return new NodeStatement{statement = scope.Value};
+			} else if (try_consume_out(TokenType.if_, out var if_)) unsafe {
 				try_consume_error(TokenType.open_parentheses, "Error: Expected `(`");
 				var expression = ParseExpression();
 				if (!expression.HasValue) {
@@ -239,9 +239,10 @@ static class Parser {
 				}
 				var statement_if = new NodeStatementIf{expression = expression.Value};
 				try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
-				var scope = ParseScope();
-				if (scope.HasValue) {
-					statement_if.scope = scope.Value;
+				var statement = ParseStatement();
+				if (statement.HasValue) {
+					statement_if.statement = (NodeStatement*)Marshal.AllocCoTaskMem(sizeof(NodeStatement));
+					*statement_if.statement = statement.Value;
 				} else {
 					Console.Error.WriteLine("Error: Expected `{`");
 					Environment.Exit(0);
