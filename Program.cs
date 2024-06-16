@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
-
-namespace Compiler;
+namespace Turquoise;
 
 class Program {
 	static string in_file_path = @"turquoise.tq";
@@ -14,6 +13,7 @@ class Program {
 	const string linker_command = @"gcc -arch x86_64 -o " + out_executable_file_path + " " + out_object_file_path;
 
 	static void Main(string[] args) {
+
 		if (args.Length > 0) {
 			in_file_path = args[0];
 		}

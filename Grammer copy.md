@@ -18,7 +18,7 @@ $$
 [\text{Binary\_expression}] &\rightarrow
 \begin{cases}
 	[\text{Expression}] * [\text{Expression}] &\text{precedence} = 1\\
-	[\text{Expression}]\space /\space  [\text{Expression}]\\
+	[\text{Expression}]\space /\space [\text{Expression}]\\
 	[\text{Expression}] + [\text{Expression}] &\text{precedence} = 0\\
 	[\text{Expression}] - \text{[Expression]}\\
 \end{cases}\\

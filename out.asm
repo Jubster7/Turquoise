@@ -5,13 +5,14 @@ _main:
 	push 3
 	pop rax
 	pop rbx
-	add rax, rbx
+	mul rbx
 	push rax
 	pop rax
 	pop rbx
 	add rax, rbx
 	push rax
-	push QWORD [rsp + 0]
+	push 1
+	push QWORD [rsp + 8]
 	mov rax, 33554433
 	pop rdi
 	syscall

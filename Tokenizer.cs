@@ -1,7 +1,7 @@
 using System.Diagnostics.Contracts;
 #pragma warning disable CS8629 // Nullable value type may be null.
 
-namespace Compiler;
+namespace Turquoise;
 
 public enum TokenType {
 	exit,
@@ -13,6 +13,8 @@ public enum TokenType {
 	var,
 	equals,
 	plus,
+	asterisk,
+
 }
 
 struct Token {
@@ -22,6 +24,14 @@ struct Token {
 
 
 static class Tokenizer {
+
+	public static int? Operator_precedence(this TokenType type) {
+		return type switch {
+			TokenType.plus => 0,
+			TokenType.asterisk => 1,
+			_ => null
+		};
+	}
 
 	public static List<Token> Tokenize(string file_contents) {
 
@@ -44,8 +54,7 @@ static class Tokenizer {
 		}
 
 
-
-		List<Token> tokens = [];
+        List<Token> tokens = [];
 		while (peek().HasValue) {
 			if (char.IsLetter(peek().Value)) {
 				buffer += consume();
@@ -84,6 +93,9 @@ static class Tokenizer {
 			} else if ( peek().Value == '+') {
 				consume();
 				tokens.Add(new Token { type = TokenType.plus});
+			} else if ( peek().Value == '*') {
+				consume();
+				tokens.Add(new Token { type = TokenType.asterisk});
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {
@@ -91,5 +103,5 @@ static class Tokenizer {
 			}
 		}
 		return tokens;
-	}
+    }
 }

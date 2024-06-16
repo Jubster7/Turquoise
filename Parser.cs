@@ -1,14 +1,11 @@
-using System.Diagnostics.Contracts;
-
 #pragma warning disable CS8629 // Nullable value type may be null.
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 
-namespace Compiler;
+namespace Turquoise;
 
+using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using OneOf;
-
-
 
 struct NodeTermIntLiteral() {
 	public Token int_literal;
@@ -23,13 +20,13 @@ unsafe struct NodeBinaryExpressionAddition {
 	public NodeExpression* rhs;
 }
 
-/* unsafe struct NodeBinaryExpressionMultiplication {
+unsafe struct NodeBinaryExpressionMultiplication {
 	public NodeExpression* lhs;
 	public NodeExpression* rhs;
-} */
+}
 
 struct NodeBinaryExpression {
-	public/* OneOf< */NodeBinaryExpressionAddition/* , NodeBinaryExpressionMultiplication> */ binary_expression;
+	public OneOf<NodeBinaryExpressionAddition , NodeBinaryExpressionMultiplication>  binary_expression;
 }
 
 struct NodeTerm {
@@ -71,32 +68,52 @@ static class Parser {
 			return null;
 		}
 
-		unsafe NodeExpression? Parse_expression() {
-			NodeTerm? term = Parse_term();
-			if (term.HasValue) {
-				if(try_consume(TokenType.plus)) {
-					var binary_expression = new NodeBinaryExpression();
-					var binary_expression_addition = new NodeBinaryExpressionAddition();
-					var lhs_expression = new NodeExpression {expression = term.Value};
-					binary_expression_addition.lhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression));
-					*binary_expression_addition.lhs = lhs_expression;
+		unsafe NodeExpression? Parse_expression(int min_precedence = 0) {
 
-					var rhs = Parse_expression();
-					if (rhs.HasValue) {
-						var rhs_expression = rhs.Value;
-						binary_expression_addition.rhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression));
-						*binary_expression_addition.rhs = rhs_expression;
-						binary_expression.binary_expression = binary_expression_addition;
-						return new NodeExpression {expression = binary_expression};
-					} else {
-						throw new Exception("Error: Expected expression");
-					}
+			NodeTerm? term_lhs = Parse_term();
+			if (!term_lhs.HasValue) return null;
+			var expression_lhs = new NodeExpression{expression = term_lhs.Value};
+
+			while (true) {
+				Token? current_token = peek();
+				int? precedence = null;
+				if (current_token.HasValue) {
+					precedence = current_token.Value.type.Operator_precedence();
+					if (!precedence.HasValue || precedence < min_precedence) break;
 				} else {
-					var expression = new NodeExpression {expression = term.Value};
-					return expression;
+					break;
 				}
+
+				Token operator_token = consume();
+				int next_min_precedence = precedence.Value + 1;
+				var expression_rhs = Parse_expression(next_min_precedence);
+
+				if (!expression_rhs.HasValue) {
+					throw new Exception("Error: Unable to parse expression");
+				}
+
+				var expression = new NodeBinaryExpression();
+
+				if (operator_token.type == TokenType.plus) {
+                    var add = new NodeBinaryExpressionAddition {
+                        lhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression)),
+                    	rhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression))
+                    };
+                    *add.lhs = expression_lhs;
+                    *add.rhs = expression_rhs.Value;
+					expression.binary_expression = add;
+				} else if (operator_token.type == TokenType.asterisk) {
+                    var mul = new NodeBinaryExpressionMultiplication {
+                        lhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression)),
+                        rhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression))
+                    };
+                    *mul.lhs = expression_lhs;
+                    *mul.rhs = expression_rhs.Value;
+					expression.binary_expression = mul;
+				}
+				expression_lhs.expression = expression;
 			}
-			return null;
+			return expression_lhs;
 		}
 
 		NodesStatement? Parse_statement() {
@@ -120,9 +137,7 @@ static class Parser {
 
 				try_consume_error(TokenType.equals, "Error: Expected `=`");
 
-
 				NodeStatementVar statementVar = new NodeStatementVar {identifier = statement_identifier.Value};
-
 
 				NodeExpression? expression = Parse_expression();
 				if (expression.HasValue) {
@@ -138,7 +153,7 @@ static class Parser {
 		}
 
 		int index = 0;
-		Token? peek(int offset = 0) {
+		[Pure] Token? peek(int offset = 0) {
 			if (index + offset >= tokens.Count) {
 				return null;
 			}

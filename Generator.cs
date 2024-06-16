@@ -1,5 +1,5 @@
 using System.Diagnostics.Contracts;
-namespace Compiler;
+namespace Turquoise;
 
 enum SystemCall {
 	exit = 0x2000001,
@@ -27,10 +27,30 @@ static class Generator {
 				},
 				NodeTermIdentifier => {
 					var identifier_value = NodeTermIdentifier.identifier.value;
-					if (!variables.TryGetValue(identifier_value!, out Variable value)) {
-						throw new Exception("Error: Undeclared identifier `" + identifier_value + "`");
-					}
+					if (identifier_value == null) throw new Exception("Error: identifier is null");
+					if (!variables.TryGetValue(identifier_value, out Variable value)) throw new Exception("Error: Undeclared identifier `" + identifier_value + "`");
 					push("QWORD [rsp + " + (stack_size - value.stack_location - 1) * 8 + "]");
+				}
+			);
+		}
+
+		unsafe void Generate_Binary_expression(NodeBinaryExpression binaryExpression) {
+			binaryExpression.binary_expression.Switch(
+				NodeBinaryExpressionAddition => {
+					GenerateExpression(*NodeBinaryExpressionAddition.lhs);
+					GenerateExpression(*NodeBinaryExpressionAddition.rhs);
+					pop("rax");
+					pop("rbx");
+					output += "\tadd rax, rbx\n";
+					push("rax");
+				},
+				NodeBinaryExpressionMultiplication => {
+					GenerateExpression(*NodeBinaryExpressionMultiplication.lhs);
+					GenerateExpression(*NodeBinaryExpressionMultiplication.rhs);
+					pop("rax");
+					pop("rbx");
+					output += "\tmul rbx\n";
+					push("rax");
 				}
 			);
 		}
@@ -41,12 +61,7 @@ static class Generator {
 					Generate_Term(NodeTerm);
 				},
 				NodeBinaryExpression => {
-					GenerateExpression(*NodeBinaryExpression.binary_expression.lhs);
-					GenerateExpression(*NodeBinaryExpression.binary_expression.rhs);
-					pop("rax");
-					pop("rbx");
-					output += "\tadd rax, rbx\n";
-					push("rax");
+					Generate_Binary_expression(NodeBinaryExpression);
 				}
 			);
 		}
@@ -70,10 +85,11 @@ static class Generator {
 					output += "\tsyscall\n";
 				},
 				NodeStatementVar => {
-					if (variables.ContainsKey(NodeStatementVar.identifier.value!)) {
+					if (NodeStatementVar.identifier.value == null) throw new Exception("Error: identifier is null");
+					if (variables.ContainsKey(NodeStatementVar.identifier.value)) {
 						throw new Exception("Error: Identifier `" + NodeStatementVar.identifier.value + "` is already used");
 					}
-					variables.Add(NodeStatementVar.identifier.value! , new Variable { stack_location = stack_size });
+					variables.Add(NodeStatementVar.identifier.value , new Variable { stack_location = stack_size });
 					GenerateExpression(NodeStatementVar.expression);
 				}
 			);
@@ -82,7 +98,6 @@ static class Generator {
 		foreach (NodesStatement nodesStatement in root.statements) {
 			GenerateStatement(nodesStatement);
 		}
-
 
 		output += "\tmov rax, " + (int)SystemCall.exit + "\n";
 		output += "\tmov rdi, 0\n";
