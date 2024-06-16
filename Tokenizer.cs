@@ -13,8 +13,9 @@ public enum TokenType {
 	var,
 	equals,
 	plus,
+	minus,
 	asterisk,
-
+	forward_slash,
 }
 
 struct Token {
@@ -25,10 +26,12 @@ struct Token {
 
 static class Tokenizer {
 
-	public static int? Operator_precedence(this TokenType type) {
+	public static int? OperatorPrecedence(this TokenType type) {
 		return type switch {
 			TokenType.plus => 0,
+			TokenType.minus => 0,
 			TokenType.asterisk => 1,
+			TokenType.forward_slash => 1,
 			_ => null
 		};
 	}
@@ -93,9 +96,15 @@ static class Tokenizer {
 			} else if ( peek().Value == '+') {
 				consume();
 				tokens.Add(new Token { type = TokenType.plus});
+			} else if ( peek().Value == '-') {
+				consume();
+				tokens.Add(new Token { type = TokenType.minus});
 			} else if ( peek().Value == '*') {
 				consume();
 				tokens.Add(new Token { type = TokenType.asterisk});
+			} else if ( peek().Value == '/') {
+				consume();
+				tokens.Add(new Token { type = TokenType.forward_slash});
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {

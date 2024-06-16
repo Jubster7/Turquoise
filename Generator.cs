@@ -20,7 +20,7 @@ static class Generator {
 		string output = $"global {entry_point_name}\n{entry_point_name}:\n";
 		Dictionary<string, Variable> variables = [];
 
-		void Generate_Term(NodeTerm nodeTerm) {
+		unsafe void GenerateTerm(NodeTerm nodeTerm) {
 			nodeTerm.term.Switch(
 				NodeTermIntLiteral => {
 					push(NodeTermIntLiteral.int_literal.value);
@@ -30,26 +30,46 @@ static class Generator {
 					if (identifier_value == null) throw new Exception("Error: identifier is null");
 					if (!variables.TryGetValue(identifier_value, out Variable value)) throw new Exception("Error: Undeclared identifier `" + identifier_value + "`");
 					push("QWORD [rsp + " + (stack_size - value.stack_location - 1) * 8 + "]");
+				},
+				NodeTermParentheses => {
+					GenerateExpression(*NodeTermParentheses.expression);
 				}
 			);
 		}
 
-		unsafe void Generate_Binary_expression(NodeBinaryExpression binaryExpression) {
+		unsafe void GenerateBinaryExpression(NodeBinaryExpression binaryExpression) {
 			binaryExpression.binary_expression.Switch(
 				NodeBinaryExpressionAddition => {
-					GenerateExpression(*NodeBinaryExpressionAddition.lhs);
 					GenerateExpression(*NodeBinaryExpressionAddition.rhs);
+					GenerateExpression(*NodeBinaryExpressionAddition.lhs);
 					pop("rax");
 					pop("rbx");
 					output += "\tadd rax, rbx\n";
 					push("rax");
 				},
+				NodeBinaryExpressionSubtraction => {
+					GenerateExpression(*NodeBinaryExpressionSubtraction.rhs);
+					GenerateExpression(*NodeBinaryExpressionSubtraction.lhs);
+					pop("rax");
+					pop("rbx");
+					output += "\tsub rax, rbx\n";
+					push("rax");
+				},
 				NodeBinaryExpressionMultiplication => {
-					GenerateExpression(*NodeBinaryExpressionMultiplication.lhs);
 					GenerateExpression(*NodeBinaryExpressionMultiplication.rhs);
+					GenerateExpression(*NodeBinaryExpressionMultiplication.lhs);
 					pop("rax");
 					pop("rbx");
 					output += "\tmul rbx\n";
+					push("rax");
+				},
+				NodeBinaryExpressionDivision => {
+					GenerateExpression(*NodeBinaryExpressionDivision.rhs);
+					GenerateExpression(*NodeBinaryExpressionDivision.lhs);
+					pop("rax");
+					pop("rbx");
+					output += "\tmov rdx, 0\n";
+					output += "\tdiv rbx\n";
 					push("rax");
 				}
 			);
@@ -58,10 +78,10 @@ static class Generator {
 		unsafe void GenerateExpression(NodeExpression nodeExpression) {
 			nodeExpression.expression.Switch(
 				NodeTerm => {
-					Generate_Term(NodeTerm);
+					GenerateTerm(NodeTerm);
 				},
 				NodeBinaryExpression => {
-					Generate_Binary_expression(NodeBinaryExpression);
+					GenerateBinaryExpression(NodeBinaryExpression);
 				}
 			);
 		}
@@ -102,6 +122,7 @@ static class Generator {
 		output += "\tmov rax, " + (int)SystemCall.exit + "\n";
 		output += "\tmov rdi, 0\n";
 		output += "\tsyscall";
-		return output;
+
+		return output.Trim();
 	}
 }

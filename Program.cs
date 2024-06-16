@@ -18,14 +18,20 @@ class Program {
 			in_file_path = args[0];
 		}
 
-		if (!File.Exists(in_file_path)) throw new FileNotFoundException();
-		string input_file_contents = File.ReadAllText(in_file_path);
-		string output_file_contents = Compile(input_file_contents);
+		try {
+			if (!File.Exists(in_file_path)) throw new FileNotFoundException();
+			string input_file_contents = File.ReadAllText(in_file_path);
+			string output_file_contents = Compile(input_file_contents);
 
-		File.CreateText(out_file_path);
-		File.AppendAllText(out_file_path, output_file_contents);
+			File.CreateText(out_file_path);
+			File.AppendAllText(out_file_path, output_file_contents);
 
-		ExecuteCommand(assembler_command + " && " + linker_command);
+			ExecuteCommand(assembler_command + " && " + linker_command);
+		} catch (Exception exception) {
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.Error.WriteLine(exception.Message);
+			Console.ResetColor();
+		}
 	}
 
 	static string Compile(string input_file_contents) {
@@ -47,8 +53,11 @@ class Program {
 		process.Start();
 		string output = process.StandardOutput.ReadToEnd();
 		string error = process.StandardError.ReadToEnd();
+		Console.ForegroundColor = ConsoleColor.Yellow;
 		if (!string.IsNullOrEmpty(output)) Console.WriteLine($"Command Output: {output}");
+		Console.ForegroundColor = ConsoleColor.Red;
 		if (!string.IsNullOrEmpty(error)) Console.WriteLine($"Command Error: {error}");
+		Console.ResetColor();
 		process.WaitForExit();
 	}
 }
