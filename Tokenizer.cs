@@ -9,6 +9,8 @@ public enum TokenType {
 	semicolon,
 	open_parentheses,
 	close_parentheses,
+	open_brace,
+	close_brace,
 	identifier,
 	var,
 	equals,
@@ -16,6 +18,7 @@ public enum TokenType {
 	minus,
 	asterisk,
 	forward_slash,
+	if_,
 }
 
 struct Token {
@@ -66,14 +69,14 @@ static class Tokenizer {
 				}
 				if (buffer == "exit") {
 					tokens.Add(new Token { type = TokenType.exit });
-					clear(ref buffer);
 				} else if (buffer == "var") {
 					tokens.Add(new Token {type = TokenType.var});
-					clear(ref buffer);
+				} else if (buffer == "if") {
+					tokens.Add(new Token {type = TokenType.if_});
 				} else {
 					tokens.Add(new Token {type = TokenType.identifier, value = buffer});
-					clear(ref buffer);
 				}
+				clear(ref buffer);
 			} else if (char.IsDigit(peek().Value)) {
 				buffer += consume();
 				while (peek().HasValue && char.IsDigit(peek().Value)) {
@@ -84,6 +87,12 @@ static class Tokenizer {
 			} else if (peek().Value == '(') {
 				consume();
 				tokens.Add(new Token { type = TokenType.open_parentheses });
+			} else if (peek().Value == '{') {
+				consume();
+				tokens.Add(new Token { type = TokenType.open_brace });
+			} else if (peek().Value == '}') {
+				consume();
+				tokens.Add(new Token { type = TokenType.close_brace });
 			} else if (peek().Value == ')') {
 				consume();
 				tokens.Add(new Token { type = TokenType.close_parentheses});
@@ -108,7 +117,8 @@ static class Tokenizer {
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {
-				throw new Exception("Error: Invalid Character `" + peek() + "`");
+				Console.Error.WriteLine("Error: Invalid Character `" + peek() + "`");
+				Environment.Exit(0);
 			}
 		}
 		return tokens;

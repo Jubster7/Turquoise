@@ -18,23 +18,18 @@ class Program {
 			in_file_path = args[0];
 		}
 
-		try {
-			if (!File.Exists(in_file_path)) throw new FileNotFoundException();
-			string input_file_contents = File.ReadAllText(in_file_path);
-			string output_file_contents = Compile(input_file_contents);
+		if (!File.Exists(in_file_path)) throw new FileNotFoundException();
+		string input_file_contents = File.ReadAllText(in_file_path);
+		string output_file_contents = Compile(input_file_contents);
 
-			File.CreateText(out_file_path);
-			File.AppendAllText(out_file_path, output_file_contents);
+		File.CreateText(out_file_path);
+		File.AppendAllText(out_file_path, output_file_contents);
 
-			ExecuteCommand(assembler_command + " && " + linker_command);
-		} catch (Exception exception) {
-			Console.ForegroundColor = ConsoleColor.Red;
-			Console.Error.WriteLine(exception.Message);
-			Console.ResetColor();
-		}
+		ExecuteCommand(assembler_command + " && " + linker_command);
 	}
 
 	static string Compile(string input_file_contents) {
+		Console.ForegroundColor = ConsoleColor.Red;
 		List<Token> tokens = Tokenizer.Tokenize(input_file_contents);
 		NodeProgram program = Parser.Parse(tokens);
 		return Generator.Generate(program);

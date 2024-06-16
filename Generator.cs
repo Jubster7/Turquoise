@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Diagnostics.Contracts;
 namespace Turquoise;
 
@@ -9,6 +10,7 @@ enum SystemCall {
 }
 
 struct Variable {
+	public string name;
 	public int stack_location;
 }
 
@@ -16,9 +18,11 @@ static class Generator {
 
 	[Pure] public static string Generate(NodeProgram root) {
 		int stack_size = 0;
+		int label_count = 0;
 		string entry_point_name = Program.assembly_entry_point_label;
 		string output = $"global {entry_point_name}\n{entry_point_name}:\n";
-		Dictionary<string, Variable> variables = [];
+		List<Variable> variables = [];
+		List<int> scopes = [];
 
 		unsafe void GenerateTerm(NodeTerm nodeTerm) {
 			nodeTerm.term.Switch(
@@ -27,9 +31,12 @@ static class Generator {
 				},
 				NodeTermIdentifier => {
 					var identifier_value = NodeTermIdentifier.identifier.value;
-					if (identifier_value == null) throw new Exception("Error: identifier is null");
-					if (!variables.TryGetValue(identifier_value, out Variable value)) throw new Exception("Error: Undeclared identifier `" + identifier_value + "`");
-					push("QWORD [rsp + " + (stack_size - value.stack_location - 1) * 8 + "]");
+					Variable[] values = variables.Where(variable => variable.name == identifier_value).ToArray();
+					if (values.Length != 1) {
+						Console.Error.WriteLine("Error: Undeclared identifier `" + identifier_value + "`");
+						Environment.Exit(0);
+					}
+					push("QWORD [rsp + " + (stack_size - values[0].stack_location - 1) * 8 + "]");
 				},
 				NodeTermParentheses => {
 					GenerateExpression(*NodeTermParentheses.expression);
@@ -96,7 +103,23 @@ static class Generator {
 			stack_size--;
 		}
 
-		void GenerateStatement(in NodesStatement nodesStatement) {
+		void BeginScope() {
+			scopes.Add(variables.Count);
+		}
+
+		void EndScope() {
+			int pop_count = variables.Count - scopes.Last();
+			output += "\tadd rsp, " + pop_count * 8 + "\n";
+			stack_size -= pop_count;
+			variables.RemoveRange(scopes.Last(), pop_count);
+			scopes.RemoveAt(scopes.Count - 1);
+		}
+
+		string create_label() {
+			return "label" + label_count;
+		}
+
+		void GenerateStatement(in NodeStatement nodesStatement) {
 			nodesStatement.statement.Switch(
 				NodeStatementExit => {
 					GenerateExpression(NodeStatementExit.expression);
@@ -105,17 +128,30 @@ static class Generator {
 					output += "\tsyscall\n";
 				},
 				NodeStatementVar => {
-					if (NodeStatementVar.identifier.value == null) throw new Exception("Error: identifier is null");
-					if (variables.ContainsKey(NodeStatementVar.identifier.value)) {
-						throw new Exception("Error: Identifier `" + NodeStatementVar.identifier.value + "` is already used");
+					var identifier_value = NodeStatementVar.identifier.value;
+					Variable[] values = variables.Where(variable => variable.name == identifier_value).ToArray();
+
+					if (values.Length > 0) {
+						Console.Error.WriteLine("Error: Identifier `" + identifier_value + "` is already declared");
+						Environment.Exit(0);
 					}
-					variables.Add(NodeStatementVar.identifier.value , new Variable { stack_location = stack_size });
+					variables.Add(new Variable { name = identifier_value + "", stack_location = stack_size });
 					GenerateExpression(NodeStatementVar.expression);
+				},
+				NodeStatementScope => {
+					BeginScope();
+					foreach (NodeStatement statement in NodeStatementScope.statements) {
+						GenerateStatement(statement);
+					}
+					EndScope();
+				},
+				NodeStatementIf => {
+					throw new NotImplementedException();
 				}
 			);
 		}
 
-		foreach (NodesStatement nodesStatement in root.statements) {
+		foreach (NodeStatement nodesStatement in root.statements) {
 			GenerateStatement(nodesStatement);
 		}
 
