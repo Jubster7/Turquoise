@@ -3,5 +3,4 @@ var x = 0;
 if (x + 1) {
 	exit(1);
 }
-var z = x + 5;
 exit(1);

@@ -33,12 +33,6 @@ _main:
 	syscall
 	add rsp, 0
 label0:
-	push 5
-	push QWORD [rsp + 8]
-	pop rax
-	pop rbx
-	add rax, rbx
-	push rax
 	push 1
 	mov rax, 33554433
 	pop rdi
