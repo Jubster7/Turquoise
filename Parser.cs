@@ -1,13 +1,11 @@
+using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices;
+using OneOf;
+
 #pragma warning disable CS8629 // Nullable value type may be null.
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 
 namespace Turquoise;
-
-using System.Diagnostics.Contracts;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using OneOf;
-
 struct NodeTermIntLiteral() {
 	public Token int_literal;
 }
@@ -91,17 +89,14 @@ static class Parser {
 			if (try_consume_out(TokenType.open_parentheses, out Token? open_parentheses)) {
 				var expression = ParseExpression();
 				if (!expression.HasValue) {
-					Console.Error.WriteLine("Error: Expected expression");
-					Environment.Exit(0);
+					Program.Error("Error: Expected expression");
 				}
 
-				var term_parentheses = new NodeTermParentheses { expression = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression)) };
-				*term_parentheses.expression = expression.Value;
+				var term_parentheses = new NodeTermParentheses { expression = Allocate(expression.Value) };
 
 				try_consume_error(TokenType.close_parentheses, "Expected `)`");
                 return new NodeTerm {term = term_parentheses};
 			}
-
 			return null;
 		}
 
@@ -112,60 +107,46 @@ static class Parser {
 
 			while (true) {
 				Token? current_token = peek();
-				int? precedence = null;
-				if (current_token.HasValue) {
+                int? precedence;
+                if (current_token.HasValue) {
 					precedence = current_token.Value.type.OperatorPrecedence();
 					if (!precedence.HasValue || precedence < min_precedence) break;
 				} else {
 					break;
 				}
 
-				Token operator_token = consume();
 				int next_min_precedence = precedence.Value + 1;
+                TokenType type = consume().type;
 				var expression_rhs = ParseExpression(next_min_precedence);
 
 				if (!expression_rhs.HasValue) {
-					Console.Error.WriteLine("Error: Unable to parse expression");
-					Environment.Exit(0);
+					Program.Error("Error: Unable to parse expression");
 				}
 
 				var expression = new NodeBinaryExpression();
-
-				if (operator_token.type == TokenType.plus) {
-                    var add = new NodeBinaryExpressionAddition {
-                        lhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression)),
-                    	rhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression))
+				if (type == TokenType.plus) {
+					expression.binary_expression = new NodeBinaryExpressionAddition {
+                        lhs = Allocate(expression_lhs),
+                    	rhs = Allocate(expression_rhs.Value)
                     };
-                    *add.lhs = expression_lhs;
-                    *add.rhs = expression_rhs.Value;
-					expression.binary_expression = add;
-				} else if (operator_token.type == TokenType.asterisk) {
-                    var mul = new NodeBinaryExpressionMultiplication {
-                        lhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression)),
-                        rhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression))
+				} else if (type == TokenType.asterisk) {
+					expression.binary_expression = new NodeBinaryExpressionMultiplication {
+                        lhs = Allocate(expression_lhs),
+                        rhs = Allocate(expression_rhs.Value)
                     };
-                    *mul.lhs = expression_lhs;
-                    *mul.rhs = expression_rhs.Value;
-					expression.binary_expression = mul;
-				} else if (operator_token.type == TokenType.minus) {
-                    var sub = new NodeBinaryExpressionSubtraction {
-                        lhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression)),
-                        rhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression))
+				} else if (type == TokenType.minus) {
+					expression.binary_expression = new NodeBinaryExpressionSubtraction {
+                        lhs = Allocate(expression_lhs),
+                        rhs = Allocate(expression_rhs.Value)
                     };
-                    *sub.lhs = expression_lhs;
-                    *sub.rhs = expression_rhs.Value;
-					expression.binary_expression = sub;
-				} else if (operator_token.type == TokenType.forward_slash) {
-					var div = new NodeBinaryExpressionDivision {
-						lhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression)),
-						rhs = (NodeExpression*)Marshal.AllocCoTaskMem(sizeof(NodeExpression))
+				} else if (type == TokenType.forward_slash) {
+					expression.binary_expression = new NodeBinaryExpressionDivision {
+                        lhs = Allocate(expression_lhs),
+                        rhs = Allocate(expression_rhs.Value)
 					};
-					*div.lhs = expression_lhs;
-					*div.rhs = expression_rhs.Value;
-					expression.binary_expression = div;
 				} else {
-					Console.Error.WriteLine("Error: parsing of " + operator_token.type + " operator not defined");
-					Environment.Exit(0);
+					Program.Error("Error: parsing of " + type + " operator not defined");
+
 				}
 				expression_lhs.expression = expression;
 			}
@@ -195,18 +176,17 @@ static class Parser {
 				if((expression = ParseExpression()).HasValue) {
 					statementExit = new NodeStatementExit {expression = expression.Value };
 				} else {
-					Console.Error.WriteLine("Error: Unable to parse Expression");
-					Environment.Exit(0);
+					Program.Error("Error: Unable to parse Expression");
 					return null;
 				}
 				try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
 				try_consume_error(TokenType.semicolon, "Error: Expected `;`");
 				return new NodeStatement {statement = statementExit};
-			} else if ( try_consume(TokenType.var)) {
+			}
+			if ( try_consume(TokenType.var)) {
 
 				if (!try_consume_out(TokenType.identifier, out var statement_identifier)) {
-					Console.Error.WriteLine("Error: Expected identifier");
-					Environment.Exit(0);
+					Program.Error("Error: Expected identifier");
 				}
 
 				try_consume_error(TokenType.equals, "Error: Expected `=`");
@@ -217,35 +197,32 @@ static class Parser {
 				if (expression.HasValue) {
 					statementVar.expression = expression.Value;
 				} else {
-					Console.Error.WriteLine("Error: Invalid Expression");
-					Environment.Exit(0);
+					Program.Error("Error: Invalid Expression");
 				}
 
 				try_consume_error(TokenType.semicolon, "Error: Expected `;`");
 				return new NodeStatement {statement = statementVar};
-			} else if (peek().HasValue && peek().Value.type == TokenType.open_brace) {
+			}
+			if (peek().HasValue && peek().Value.type == TokenType.open_brace) {
 				var scope = ParseScope();
 				if (!scope.HasValue) {
-					Console.Error.WriteLine("Error: Expected `{`");
-					Environment.Exit(0);
+					Program.Error("Error: Expected `{`");
 				}
 				return new NodeStatement{statement = scope.Value};
-			} else if (try_consume_out(TokenType.if_, out var if_)) unsafe {
+			}
+			if (try_consume_out(TokenType.if_, out var if_)) unsafe {
 				try_consume_error(TokenType.open_parentheses, "Error: Expected `(`");
 				var expression = ParseExpression();
 				if (!expression.HasValue) {
-					Console.Error.WriteLine("Error: Invalid Expression");
-					Environment.Exit(0);
+					Program.Error("Error: Invalid Expression");
 				}
 				var statement_if = new NodeStatementIf{expression = expression.Value};
 				try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
 				var statement = ParseStatement();
 				if (statement.HasValue) {
-					statement_if.statement = (NodeStatement*)Marshal.AllocCoTaskMem(sizeof(NodeStatement));
-					*statement_if.statement = statement.Value;
+					statement_if.statement = Allocate(statement.Value);
 				} else {
-					Console.Error.WriteLine("Error: Expected `{`");
-					Environment.Exit(0);
+					Program.Error("Error: Expected `{`");
 				}
                 return new NodeStatement {statement = statement_if};
 			}
@@ -266,8 +243,7 @@ static class Parser {
 
 		void try_consume_error(TokenType tokenType, string error_message) {
 			if (!(peek().HasValue && peek().Value.type == tokenType)) {
-				Console.Error.WriteLine(error_message);
-				Environment.Exit(0);
+				Program.Error(error_message);
 			}
 			consume();
 		}
@@ -296,11 +272,16 @@ static class Parser {
 			if (statement.HasValue) {
 				program.statements.Add(statement.Value);
 			} else {
-				Console.Error.WriteLine("Error: Invalid Statement");
-				Environment.Exit(0);
+				Program.Error("Error: Invalid Statement");
 			}
 		}
 
 		return program;
 	}
+
+    private static unsafe T* Allocate<T>(T value) {
+        var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
+        *ptr = value;
+        return ptr;
+    }
 }

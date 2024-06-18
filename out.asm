@@ -27,13 +27,13 @@ _main:
 	pop rax
 	test rax, rax
 	jz label0
-	push 1
+	push 2
 	mov rax, 33554433
 	pop rdi
 	syscall
 	add rsp, 0
 label0:
-	push 1
+	push 3
 	mov rax, 33554433
 	pop rdi
 	syscall

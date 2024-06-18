@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
-namespace Turquoise;
+using static System.Environment;
 
+namespace Turquoise;
 class Program {
 	static string in_file_path = @"turquoise.tq";
 	const string out_file_path = @"out.asm";
@@ -11,13 +12,16 @@ class Program {
 
 	const string assembler_command = @"nasm -f macho64 " + out_file_path;
 	const string linker_command = @"gcc -arch x86_64 -o " + out_executable_file_path + " " + out_object_file_path;
+	const bool throw_on_compile_error = false;
 
 	static void Main(string[] args) {
-		if (args.Length > 0) {
+		if (args.Length == 1) {
 			in_file_path = args[0];
+		} else if (args.Length > 1) {
+			Error("Error: Expected Usage:\nTurquoise <input file>");
 		}
 
-		if (!File.Exists(in_file_path)) throw new FileNotFoundException();
+		if (!File.Exists(in_file_path)) Error("File: "+ in_file_path +" not found");
 		string input_file_contents = File.ReadAllText(in_file_path);
 		string output_file_contents = Compile(input_file_contents);
 
@@ -51,7 +55,15 @@ class Program {
 		if (!string.IsNullOrEmpty(output)) Console.WriteLine($"Command Output: {output}");
 		Console.ForegroundColor = ConsoleColor.Red;
 		if (!string.IsNullOrEmpty(error)) Console.WriteLine($"Command Error: {error}");
-		Console.ResetColor();
 		process.WaitForExit();
+	}
+
+	public static void Error(string error_message) {
+		if (throw_on_compile_error) {
+			throw new Exception(error_message);
+		} else {
+			Console.Error.WriteLine(error_message);
+			Exit(0);
+		}
 	}
 }

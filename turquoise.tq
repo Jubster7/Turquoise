@@ -1,6 +1,10 @@
 var y = (10 - 2 * 3) / 2;
 var x = 0;
 if (x + 1) {
-	exit(1);
+	// exit(1);
+	exit(2);
 }
+/*
+exit(5);
+*/
 exit(1);

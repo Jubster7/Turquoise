@@ -1,8 +1,8 @@
 using System.Diagnostics.Contracts;
+
 #pragma warning disable CS8629 // Nullable value type may be null.
 
 namespace Turquoise;
-
 public enum TokenType {
 	exit,
 	int_literal,
@@ -24,6 +24,10 @@ public enum TokenType {
 struct Token {
 	public TokenType type;
 	public string? value;
+	public readonly void Deconstruct(out TokenType type , out string? value) {
+		type = this.type;
+		value = this.value;
+	}
 }
 
 
@@ -59,7 +63,6 @@ static class Tokenizer {
 			input = string.Empty;
 		}
 
-
         List<Token> tokens = [];
 		while (peek().HasValue) {
 			if (char.IsLetter(peek().Value)) {
@@ -84,6 +87,24 @@ static class Tokenizer {
 				}
 				tokens.Add(new Token { type = TokenType.int_literal, value = buffer });
 				clear(ref buffer);
+			} else if (peek().Value == '/' && peek(1).HasValue && peek(1).Value == '/') {
+				consume();
+				consume();
+				while (peek().HasValue && peek().Value != '\n') {
+					consume();
+				}
+			} else if (peek().Value == '/' && peek(1).HasValue && peek(1).Value == '*') {
+				consume();
+				consume();
+				while (peek().HasValue && peek(1).HasValue && (peek(1).Value != '/' || peek().Value != '*')) {
+					consume();
+				}
+                if (peek().HasValue && peek(1).HasValue) {
+                    consume();
+                	consume();
+                } else {
+					Program.Error("Expected `*/`");
+				}
 			} else if (peek().Value == '(') {
 				consume();
 				tokens.Add(new Token { type = TokenType.open_parentheses });
@@ -117,10 +138,13 @@ static class Tokenizer {
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {
-				Console.Error.WriteLine("Error: Invalid Character `" + peek() + "`");
-				Environment.Exit(0);
+				Program.Error("Error: Invalid Character `" + peek() + "`");
 			}
 		}
-		return tokens;
+
+        return tokens;
+
+
+
     }
 }

@@ -1,7 +1,6 @@
-using System.Collections.Specialized;
 using System.Diagnostics.Contracts;
-namespace Turquoise;
 
+namespace Turquoise;
 enum SystemCall {
 	exit = 0x2000001,
 	//read = 0x20000003,
