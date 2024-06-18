@@ -1,6 +1,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using OneOf;
+using OneOf.Types;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
@@ -58,18 +59,33 @@ struct NodeScope {
 	public List<NodeStatement> statements;
 }
 
+
+unsafe struct NodeIfPredicateElseIf {
+	public NodeExpression expression;
+	public NodeStatement statement;
+	public NodeIfPredicate?* predicate;
+}
+
+unsafe struct NodeIfPredicateElse {
+	public NodeStatement statement;
+}
+struct NodeIfPredicate {
+	public OneOf<NodeIfPredicateElseIf, NodeIfPredicateElse> predicate;
+}
+
 unsafe struct NodeStatementIf {
 	public NodeExpression expression;
 	public NodeStatement* statement;
+	public NodeIfPredicate?* predicate;
+}
+
+struct NodeStatement {
+	public OneOf<NodeStatementExit, NodeStatementVar, NodeScope, NodeStatementIf> statement;
 }
 
 struct NodeStatementVar {
 	public Token identifier;
 	public NodeExpression expression;
-}
-
-struct NodeStatement {
-	public OneOf<NodeStatementExit, NodeStatementVar, NodeScope, NodeStatementIf> statement;
 }
 
 struct NodeProgram() {
@@ -168,6 +184,40 @@ static class Parser {
 			return scope;
 		}
 
+		unsafe NodeIfPredicate? ParseIfPredicate() {
+			if (try_consume(TokenType.else_)) {
+				if (try_consume(TokenType.if_)) {
+					try_consume_error(TokenType.open_parentheses, "Error: Expected `(`");
+					NodeIfPredicateElseIf else_if_predicate = new NodeIfPredicateElseIf {};
+					var expression = ParseExpression();
+					if (expression.HasValue) {
+						else_if_predicate.expression = expression.Value;
+					} else {
+						Program.Error("Error: Expected expression");
+					}
+					try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
+					var else_if_statement = ParseStatement();
+					if (else_if_statement.HasValue) {
+						else_if_predicate.statement = else_if_statement.Value;
+					} else {
+						Program.Error("Error: Expected statement");
+					}
+					else_if_predicate.predicate = Allocate(ParseIfPredicate());
+					return new NodeIfPredicate{predicate = else_if_predicate};
+				}
+				var else_predicate = new NodeIfPredicateElse();
+				var else_statement = ParseStatement();
+				if (else_statement.HasValue) {
+					else_predicate.statement = else_statement.Value;
+				} else {
+					Program.Error("Error: Expected statement");
+				}
+				return new NodeIfPredicate{predicate = else_predicate};
+			}
+
+			return null;
+		}
+
 		NodeStatement? ParseStatement() {
 			if (try_consume(TokenType.exit)) {
 				try_consume_error(TokenType.open_parentheses,  "Error: Expected `(`");
@@ -220,12 +270,17 @@ static class Parser {
 				try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
 				var statement = ParseStatement();
 				if (statement.HasValue) {
+					if (statement.Value.statement.IsT1) Program.Error("Error: Variable declaration not allowed on non scoped if statements");
 					statement_if.statement = Allocate(statement.Value);
 				} else {
-					Program.Error("Error: Expected `{`");
+
 				}
+				statement_if.predicate = Allocate(ParseIfPredicate());
                 return new NodeStatement {statement = statement_if};
 			}
+
+			try_consume_error(TokenType.semicolon, "Error: Expected `;`");
+
 			return null;
 		}
 
@@ -272,7 +327,7 @@ static class Parser {
 			if (statement.HasValue) {
 				program.statements.Add(statement.Value);
 			} else {
-				Program.Error("Error: Invalid Statement");
+				//Program.Error("Error: Invalid Statement");
 			}
 		}
 
@@ -282,6 +337,11 @@ static class Parser {
     private static unsafe T* Allocate<T>(T value) {
         var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
         *ptr = value;
+        return ptr;
+    }
+
+    private static unsafe T* Allocate<T>() {
+        var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
         return ptr;
     }
 }

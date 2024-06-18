@@ -126,6 +126,27 @@ static class Generator {
 			EndScope();
 		}
 
+		unsafe void GenerateIfPredicate(NodeIfPredicate predicate, string total_label) {
+			predicate.predicate.Switch(
+				NodeIfPredicateElseIf => {
+					GenerateExpression(NodeIfPredicateElseIf.expression);
+					pop("rax");
+					output += "\ttest rax, rax\n";
+					string label = create_label();
+					output += "\tjz " + label + "\n";
+					GenerateStatement(NodeIfPredicateElseIf.statement);
+					output += "\tjmp " + total_label + "\n";
+					output += label + ":\n";
+					if (NodeIfPredicateElseIf.predicate->HasValue) {
+						GenerateIfPredicate(NodeIfPredicateElseIf.predicate->Value, total_label);
+					}
+				},
+				NodeIfPredicateElse => {
+					GenerateStatement(NodeIfPredicateElse.statement);
+				}
+			);
+		}
+
 		unsafe void GenerateStatement(in NodeStatement nodesStatement) {
 			nodesStatement.statement.Switch(
 				NodeStatementExit => {
@@ -151,11 +172,19 @@ static class Generator {
 				NodeStatementIf => {
 					GenerateExpression(NodeStatementIf.expression);
 					pop("rax");
-					string label = create_label();
 					output += "\ttest rax, rax\n";
+					string total_label = create_label();
+					string label = create_label();
 					output += "\tjz " + label + "\n";
-					GenerateStatement(*NodeStatementIf.statement);
+					if (NodeStatementIf.statement != null) {
+						GenerateStatement(*NodeStatementIf.statement);
+					}
+					output += "\tjmp " + total_label + "\n";
 					output += label + ":\n";
+					if (NodeStatementIf.predicate->HasValue) {
+						GenerateIfPredicate(NodeStatementIf.predicate->Value, total_label);
+					}
+					output += total_label + ":\n";
 				}
 			);
 		}

@@ -7,8 +7,8 @@ $$
 \begin{cases}
 	exit([\text{Expression}]); \\
 	var\space [\text{identifier}] = [\text{Expression}];\\
-	if([\text{Expression}]) [\text{scope}]\\
-	[\text{scope}]
+	if([\text{Expression}]) [\text{statement}]\quad [else\ if([\text{Expression}])[statement]]^*\quad else [\text{statement}]^?\\
+	[\text{Scope}]
 \end{cases}\\
 
 [\text{Scope}] &\to \{[\text{statement}]^*\}\\

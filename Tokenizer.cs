@@ -19,6 +19,7 @@ public enum TokenType {
 	asterisk,
 	forward_slash,
 	if_,
+	else_,
 }
 
 struct Token {
@@ -30,7 +31,6 @@ struct Token {
 	}
 }
 
-
 static class Tokenizer {
 
 	public static int? OperatorPrecedence(this TokenType type) {
@@ -41,6 +41,10 @@ static class Tokenizer {
 			TokenType.forward_slash => 1,
 			_ => null
 		};
+	}
+
+	static void clear(ref string input) {
+		input = string.Empty;
 	}
 
 	public static List<Token> Tokenize(string file_contents) {
@@ -59,9 +63,10 @@ static class Tokenizer {
 		}
 
 		string buffer = string.Empty;
-		static void clear(ref string input) {
-			input = string.Empty;
-		}
+
+
+
+
 
         List<Token> tokens = [];
 		while (peek().HasValue) {
@@ -76,6 +81,8 @@ static class Tokenizer {
 					tokens.Add(new Token {type = TokenType.var});
 				} else if (buffer == "if") {
 					tokens.Add(new Token {type = TokenType.if_});
+				} else if (buffer == "else") {
+					tokens.Add(new Token {type = TokenType.else_});
 				} else {
 					tokens.Add(new Token {type = TokenType.identifier, value = buffer});
 				}
@@ -143,8 +150,5 @@ static class Tokenizer {
 		}
 
         return tokens;
-
-
-
     }
 }
