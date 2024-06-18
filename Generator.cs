@@ -1,5 +1,7 @@
 using System.Diagnostics.Contracts;
 
+#pragma warning disable CS8629 // Nullable value type may be null.
+
 namespace Turquoise;
 enum SystemCall {
 	exit = 0x2000001,
@@ -138,8 +140,8 @@ static class Generator {
 					output += "\tjmp " + total_label + "\n";
 					output += label + ":\n";
 					if (NodeIfPredicateElseIf.predicate->HasValue) {
-						GenerateIfPredicate(NodeIfPredicateElseIf.predicate->Value, total_label);
-					}
+                        GenerateIfPredicate(NodeIfPredicateElseIf.predicate->Value, total_label);
+                    }
 				},
 				NodeIfPredicateElse => {
 					GenerateStatement(NodeIfPredicateElse.statement);

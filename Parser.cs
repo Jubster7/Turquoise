@@ -279,7 +279,7 @@ static class Parser {
                 return new NodeStatement {statement = statement_if};
 			}
 
-			try_consume_error(TokenType.semicolon, "Error: Expected `;`");
+			try_consume(TokenType.semicolon);
 
 			return null;
 		}
