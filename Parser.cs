@@ -278,11 +278,8 @@ static class Parser {
 				statement_if.predicate = Allocate(ParseIfPredicate());
                 return new NodeStatement {statement = statement_if};
 			}
-			if (try_consume(TokenType.else_)) {
-				Program.Error("Error: Statement cannot begin with else");
-			}
 
-			try_consume(TokenType.semicolon);
+			try_consume_error(TokenType.semicolon, "Error: Statement cannot start with " + peek().Value.type + " token");
 
 			return null;
 		}
