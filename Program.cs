@@ -12,7 +12,7 @@ class Program {
 
 	const string assembler_command = @"nasm -f macho64 " + out_file_path;
 	const string linker_command = @"gcc -arch x86_64 -o " + out_executable_file_path + " " + out_object_file_path;
-	const bool throw_on_compile_error = false;
+	const bool throw_on_compile_error = true;
 
 	static void Main(string[] args) {
 		if (args.Length == 1) {

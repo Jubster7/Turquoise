@@ -17,7 +17,7 @@ struct Variable {
 
 static class Generator {
 
-	[Pure] public static string Generate(NodeProgram root) {
+	[Pure] public static string Generate(in NodeProgram root) {
 		int stack_size = 0;
 		int label_count = 0;
 		string entry_point_name = Program.assembly_entry_point_label;
@@ -25,7 +25,7 @@ static class Generator {
 		List<Variable> variables = [];
 		List<int> scopes = [];
 
-		unsafe void GenerateTerm(NodeTerm nodeTerm) {
+		unsafe void GenerateTerm(in NodeTerm nodeTerm) {
 			nodeTerm.term.Switch(
 				NodeTermIntLiteral => {
 					push(NodeTermIntLiteral.int_literal.value);
@@ -45,7 +45,7 @@ static class Generator {
 			);
 		}
 
-		unsafe void GenerateBinaryExpression(NodeBinaryExpression binaryExpression) {
+		unsafe void GenerateBinaryExpression(in NodeBinaryExpression binaryExpression) {
 			binaryExpression.binary_expression.Switch(
 				NodeBinaryExpressionAddition => {
 					GenerateExpression(*NodeBinaryExpressionAddition.rhs);
@@ -83,7 +83,7 @@ static class Generator {
 			);
 		}
 
-		unsafe void GenerateExpression(NodeExpression nodeExpression) {
+		unsafe void GenerateExpression(in NodeExpression nodeExpression) {
 			nodeExpression.expression.Switch(
 				NodeTerm => {
 					GenerateTerm(NodeTerm);
@@ -110,9 +110,11 @@ static class Generator {
 
 		void EndScope() {
 			int pop_count = variables.Count - scopes.Last();
-			output += "\tadd rsp, " + pop_count * 8 + "\n";
-			stack_size -= pop_count;
-			variables.RemoveRange(scopes.Last(), pop_count);
+			if (pop_count != 0) {
+				output += "\tadd rsp, " + pop_count * 8 + "\n";
+				stack_size -= pop_count;
+				variables.RemoveRange(scopes.Last(), pop_count);
+			}
 			scopes.RemoveAt(scopes.Count - 1);
 		}
 
@@ -120,7 +122,7 @@ static class Generator {
 			return "label" + label_count++;
 		}
 
-		void GenerateScope(NodeScope nodeScope) {
+		void GenerateScope(in NodeScope nodeScope) {
 			BeginScope();
 			foreach (NodeStatement statement in nodeScope.statements) {
 				GenerateStatement(statement);
@@ -128,23 +130,15 @@ static class Generator {
 			EndScope();
 		}
 
-		unsafe void GenerateIfPredicate(NodeIfPredicate predicate, string total_label) {
+		unsafe void GenerateIfPredicate(in NodeIfPredicate predicate, string final_label) {
 			predicate.predicate.Switch(
 				NodeIfPredicateElseIf => {
-					GenerateExpression(NodeIfPredicateElseIf.expression);
-					pop("rax");
-					output += "\ttest rax, rax\n";
-					string label = create_label();
-					output += "\tjz " + label + "\n";
-					GenerateStatement(NodeIfPredicateElseIf.statement);
-					output += "\tjmp " + total_label + "\n";
-					output += label + ":\n";
-					if (NodeIfPredicateElseIf.predicate->HasValue) {
-                        GenerateIfPredicate(NodeIfPredicateElseIf.predicate->Value, total_label);
-                    }
+					GenerateIf(*((NodeStatementIf*)&NodeIfPredicateElseIf), final_label);
 				},
 				NodeIfPredicateElse => {
-					GenerateStatement(NodeIfPredicateElse.statement);
+					if (NodeIfPredicateElse.statement != null) {
+						GenerateStatement(*NodeIfPredicateElse.statement);
+					}
 				}
 			);
 		}
@@ -172,23 +166,27 @@ static class Generator {
 					GenerateScope(NodeScope);
 				},
 				NodeStatementIf => {
-					GenerateExpression(NodeStatementIf.expression);
-					pop("rax");
-					output += "\ttest rax, rax\n";
-					string total_label = create_label();
-					string label = create_label();
-					output += "\tjz " + label + "\n";
-					if (NodeStatementIf.statement != null) {
-						GenerateStatement(*NodeStatementIf.statement);
-					}
-					output += "\tjmp " + total_label + "\n";
-					output += label + ":\n";
-					if (NodeStatementIf.predicate->HasValue) {
-						GenerateIfPredicate(NodeStatementIf.predicate->Value, total_label);
-					}
-					output += total_label + ":\n";
+					string final_label = create_label();
+					GenerateIf(NodeStatementIf, final_label);
+					output += final_label + ":\n";
 				}
 			);
+		}
+
+		unsafe void GenerateIf(NodeStatementIf if_, string final_label) {
+			GenerateExpression(if_.expression);
+			pop("rax");
+			output += "\ttest rax, rax\n";
+			string label = create_label();
+			output += "\tjz " + label + "\n";
+			if (if_.statement != null) {
+				GenerateStatement(*if_.statement);
+			}
+			output += "\tjmp " + final_label + "\n";
+			output += label + ":\n";
+			if (if_.predicate->HasValue) {
+				GenerateIfPredicate(if_.predicate->Value, final_label);
+			}
 		}
 
 		foreach (NodeStatement nodesStatement in root.statements) {

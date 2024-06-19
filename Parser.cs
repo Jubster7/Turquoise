@@ -62,12 +62,12 @@ struct NodeScope {
 
 unsafe struct NodeIfPredicateElseIf {
 	public NodeExpression expression;
-	public NodeStatement statement;
+	public NodeStatement* statement;
 	public NodeIfPredicate?* predicate;
 }
 
 unsafe struct NodeIfPredicateElse {
-	public NodeStatement statement;
+	public NodeStatement* statement;
 }
 struct NodeIfPredicate {
 	public OneOf<NodeIfPredicateElseIf, NodeIfPredicateElse> predicate;
@@ -116,7 +116,7 @@ static class Parser {
 			return null;
 		}
 
-		unsafe NodeExpression? ParseExpression(int min_precedence = 0) {
+		unsafe NodeExpression? ParseExpression(in int min_precedence = 0) {
 			NodeTerm? term_lhs = ParseTerm();
 			if (!term_lhs.HasValue) return null;
 			var expression_lhs = new NodeExpression{expression = term_lhs.Value};
@@ -198,9 +198,9 @@ static class Parser {
 					try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
 					var else_if_statement = ParseStatement();
 					if (else_if_statement.HasValue) {
-						else_if_predicate.statement = else_if_statement.Value;
+						else_if_predicate.statement = Allocate(else_if_statement.Value);
 					} else {
-						Program.Error("Error: Expected statement");
+						//Program.Error("Error: Expected statement");
 					}
 					else_if_predicate.predicate = Allocate(ParseIfPredicate());
 					return new NodeIfPredicate{predicate = else_if_predicate};
@@ -208,9 +208,9 @@ static class Parser {
 				var else_predicate = new NodeIfPredicateElse();
 				var else_statement = ParseStatement();
 				if (else_statement.HasValue) {
-					else_predicate.statement = else_statement.Value;
+					else_predicate.statement = Allocate(else_statement.Value);
 				} else {
-					Program.Error("Error: Expected statement");
+					//Program.Error("Error: Expected statement");
 				}
 				return new NodeIfPredicate{predicate = else_predicate};
 			}
@@ -285,7 +285,7 @@ static class Parser {
 		}
 
 		int index = 0;
-		[Pure] Token? peek(int offset = 0) {
+		[Pure] Token? peek(in int offset = 0) {
 			if (index + offset >= tokens.Count) {
 				return null;
 			}
@@ -296,14 +296,14 @@ static class Parser {
 			return tokens[index++];
 		}
 
-		void try_consume_error(TokenType tokenType, string error_message) {
+		void try_consume_error(in TokenType tokenType, in string error_message) {
 			if (!(peek().HasValue && peek().Value.type == tokenType)) {
 				Program.Error(error_message);
 			}
 			consume();
 		}
 
- 		bool try_consume(TokenType tokenType) {
+ 		bool try_consume(in TokenType tokenType) {
 			if (peek().HasValue && peek().Value.type == tokenType) {
 				consume();
 				return true;
@@ -311,7 +311,7 @@ static class Parser {
 			return false;
 		}
 
-		bool try_consume_out(TokenType tokenType, out Token? token) {
+		bool try_consume_out(in TokenType tokenType, out Token? token) {
 			if (peek().HasValue && peek().Value.type == tokenType) {
 				token = consume();
 				return true;
@@ -334,7 +334,7 @@ static class Parser {
 		return program;
 	}
 
-    private static unsafe T* Allocate<T>(T value) {
+    private static unsafe T* Allocate<T>(in T value) {
         var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
         *ptr = value;
         return ptr;

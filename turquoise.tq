@@ -1,4 +1,4 @@
 var x = 99;
-if (1) if (1) ; else exit(3);
+if(0) ; else if (0) ; else;
 
 exit(x);
