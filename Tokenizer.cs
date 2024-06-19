@@ -43,10 +43,6 @@ static class Tokenizer {
 		};
 	}
 
-	static void clear(ref string input) {
-		input = string.Empty;
-	}
-
 	public static List<Token> Tokenize(string file_contents) {
 
 		int index = 0;
@@ -62,38 +58,31 @@ static class Tokenizer {
 			return file_contents[index++];
 		}
 
-		string buffer = string.Empty;
-
-
-
-
-
-        List<Token> tokens = [];
+		List<Token> tokens = [];
 		while (peek().HasValue) {
 			if (char.IsLetter(peek().Value)) {
+				string buffer = string.Empty;
 				buffer += consume();
 				while (peek().HasValue && char.IsLetterOrDigit(peek().Value)) {
 					buffer += consume();
 				}
-				if (buffer == "exit") {
-					tokens.Add(new Token { type = TokenType.exit });
-				} else if (buffer == "var") {
-					tokens.Add(new Token {type = TokenType.var});
-				} else if (buffer == "if") {
-					tokens.Add(new Token {type = TokenType.if_});
-				} else if (buffer == "else") {
-					tokens.Add(new Token {type = TokenType.else_});
-				} else {
-					tokens.Add(new Token {type = TokenType.identifier, value = buffer});
-				}
-				clear(ref buffer);
+
+				var (token_type, token_value) = buffer switch {
+					"exit" => (TokenType.exit, null),
+					"var" => (TokenType.var, null),
+					"if" => (TokenType.if_, null),
+					"else" => (TokenType.else_, null),
+					_ => (TokenType.identifier, buffer),
+				};
+
+				tokens.Add(new Token{type = token_type, value = token_value});
 			} else if (char.IsDigit(peek().Value)) {
+				string buffer = string.Empty;
 				buffer += consume();
 				while (peek().HasValue && char.IsDigit(peek().Value)) {
 					buffer += consume();
 				}
 				tokens.Add(new Token { type = TokenType.int_literal, value = buffer });
-				clear(ref buffer);
 			} else if (peek().Value == '/' && peek(1).HasValue && peek(1).Value == '/') {
 				consume();
 				consume();
@@ -106,10 +95,10 @@ static class Tokenizer {
 				while (peek().HasValue && peek(1).HasValue && (peek(1).Value != '/' || peek().Value != '*')) {
 					consume();
 				}
-                if (peek().HasValue && peek(1).HasValue) {
-                    consume();
-                	consume();
-                } else {
+				if (peek().HasValue && peek(1).HasValue) {
+					consume();
+					consume();
+				} else {
 					Program.Error("Expected `*/`");
 				}
 			} else if (peek().Value == '(') {
@@ -149,6 +138,6 @@ static class Tokenizer {
 			}
 		}
 
-        return tokens;
-    }
+		return tokens;
+	}
 }

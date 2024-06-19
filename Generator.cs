@@ -1,6 +1,7 @@
 using System.Diagnostics.Contracts;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 
 namespace Turquoise;
 enum SystemCall {
@@ -133,8 +134,8 @@ static class Generator {
 		unsafe void GenerateIfPredicate(in NodeIfPredicate predicate, string final_label) {
 			predicate.predicate.Switch(
 				NodeIfPredicateElseIf => {
-					GenerateIf(*((NodeStatementIf*)&NodeIfPredicateElseIf), final_label);
-				},
+                    GenerateIf(*(NodeStatementIf*)&NodeIfPredicateElseIf, final_label);
+                },
 				NodeIfPredicateElse => {
 					if (NodeIfPredicateElse.statement != null) {
 						GenerateStatement(*NodeIfPredicateElse.statement);
