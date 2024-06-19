@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using System.Reflection.Emit;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
@@ -17,7 +18,6 @@ struct Variable {
 }
 
 static class Generator {
-
 	[Pure] public static string Generate(in NodeProgram root) {
 		int stack_size = 0;
 		int label_count = 0;
@@ -84,7 +84,7 @@ static class Generator {
 			);
 		}
 
-		unsafe void GenerateExpression(in NodeExpression nodeExpression) {
+		void GenerateExpression(in NodeExpression nodeExpression) {
 			nodeExpression.expression.Switch(
 				NodeTerm => {
 					GenerateTerm(NodeTerm);
@@ -95,12 +95,12 @@ static class Generator {
 			);
 		}
 
-		void push(string? value) {
+		void push(in string? value) {
 			output += "\tpush " + value +"\n";
 			stack_size++;
 		}
 
-		void pop(string register) {
+		void pop(in string register) {
 			output += "\tpop " + register +"\n";
 			stack_size--;
 		}
@@ -134,7 +134,7 @@ static class Generator {
 		unsafe void GenerateIfPredicate(in NodeIfPredicate predicate, string final_label) {
 			predicate.predicate.Switch(
 				NodeIfPredicateElseIf => {
-                    GenerateIf(*(NodeStatementIf*)&NodeIfPredicateElseIf, final_label);
+                    GenerateElseIf(NodeIfPredicateElseIf, final_label);
                 },
 				NodeIfPredicateElse => {
 					if (NodeIfPredicateElse.statement != null) {
@@ -144,7 +144,7 @@ static class Generator {
 			);
 		}
 
-		unsafe void GenerateStatement(in NodeStatement nodesStatement) {
+		void GenerateStatement(in NodeStatement nodesStatement) {
 			nodesStatement.statement.Switch(
 				NodeStatementExit => {
 					GenerateExpression(NodeStatementExit.expression);
@@ -174,20 +174,24 @@ static class Generator {
 			);
 		}
 
-		unsafe void GenerateIf(NodeStatementIf if_, string final_label) {
+		unsafe void GenerateIf(in NodeStatementIf if_, string final_label) {
 			GenerateExpression(if_.expression);
 			pop("rax");
-			output += "\ttest rax, rax\n";
 			string label = create_label();
-			output += "\tjz " + label + "\n";
+			output += "\ttest rax, rax\n";
+			output += "\tjz " + (if_.predicate->HasValue ? label : final_label) + "\n";
 			if (if_.statement != null) {
 				GenerateStatement(*if_.statement);
 			}
-			output += "\tjmp " + final_label + "\n";
-			output += label + ":\n";
 			if (if_.predicate->HasValue) {
+				output += "\tjmp " + final_label + "\n";
+				output += label + ":\n";
 				GenerateIfPredicate(if_.predicate->Value, final_label);
 			}
+		}
+
+		unsafe void GenerateElseIf(NodeIfPredicateElseIf if_, string final_label) {
+			GenerateIf(*(NodeStatementIf*)&if_, final_label);
 		}
 
 		foreach (NodeStatement nodesStatement in root.statements) {

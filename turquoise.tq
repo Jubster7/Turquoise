@@ -1,3 +1,19 @@
+var y = (10 - 2 * 3) / 2;
 var x = 99;
-if(0) ; else if (0) ;
+if(0);
+
 exit(x);
+
+
+/* TODO
+reassignment
+unary operators
+functions
+booleans
+comparison
+strings
+text output
+text input
+other types
+pointers & arrays
+*/

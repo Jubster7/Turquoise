@@ -1,7 +1,6 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using OneOf;
-using OneOf.Types;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
@@ -277,6 +276,9 @@ static class Parser {
 				}
 				statement_if.predicate = Allocate(ParseIfPredicate());
                 return new NodeStatement {statement = statement_if};
+			}
+			if (peek().HasValue && peek().Value.type == TokenType.close_brace) {
+				return null;
 			}
 
 			try_consume_error(TokenType.semicolon, "Error: Statement cannot start with " + peek().Value.type + " token");
