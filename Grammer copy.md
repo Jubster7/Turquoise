@@ -5,9 +5,10 @@ $$
 
 [\text{Statement}] &\to
 \begin{cases}
-	exit([\text{Expression}]); \\
-	var\space [\text{identifier}] = [\text{Expression}];\\
-	if([\text{Expression}]) [\text{statement}]\quad [else\ if([\text{Expression}])[statement]]^*\quad else [\text{statement}]^?\\
+	\text{exit}([\text{Expression}]); \\
+	\text{var}\space [\text{identifier}] = [\text{Expression}];\\
+	[\text{identifier}] = [\text{Expression}];\\
+	\text{if}([\text{Expression}]) [\text{statement}]\quad [\text{else if}([\text{Expression}])[statement]]^*\quad \text{else} [\text{statement}]^?\\
 	[\text{Scope}]
 \end{cases}\\
 

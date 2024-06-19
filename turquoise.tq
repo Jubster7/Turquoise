@@ -1,12 +1,18 @@
 var y = (10 - 2 * 3) / 2;
 var x = 99;
-if(0);
+
+if (0) {
+	x = 1;
+} else if (1) {
+	x = 2;
+} else {
+	x = 3;
+}
 
 exit(x);
 
 
 /* TODO
-reassignment
 unary operators
 functions
 booleans

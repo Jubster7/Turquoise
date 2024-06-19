@@ -78,8 +78,13 @@ unsafe struct NodeStatementIf {
 	public NodeIfPredicate?* predicate;
 }
 
+struct NodeStatementAssign {
+	public Token identifier;
+	public NodeExpression expression;
+}
+
 struct NodeStatement {
-	public OneOf<NodeStatementExit, NodeStatementVar, NodeScope, NodeStatementIf> statement;
+	public OneOf<NodeStatementExit, NodeStatementVar, NodeScope, NodeStatementIf, NodeStatementAssign> statement;
 }
 
 struct NodeStatementVar {
@@ -251,6 +256,18 @@ static class Parser {
 
 				try_consume_error(TokenType.semicolon, "Error: Expected `;`");
 				return new NodeStatement {statement = statementVar};
+			}
+			if (peek().HasValue && peek().Value.type == TokenType.identifier && peek(1).HasValue && peek(1).Value.type == TokenType.equals) {
+				var assign = new NodeStatementAssign{identifier = consume()};
+				consume();
+				var expression = ParseExpression();
+				if (expression.HasValue) {
+					assign.expression = expression.Value;
+				} else {
+					Program.Error("Error: Expected expression");
+				}
+				try_consume_error(TokenType.semicolon, "Error: Expected `;`");
+				return new NodeStatement {statement = assign};
 			}
 			if (peek().HasValue && peek().Value.type == TokenType.open_brace) {
 				var scope = ParseScope();

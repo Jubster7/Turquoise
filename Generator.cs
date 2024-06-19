@@ -33,8 +33,8 @@ static class Generator {
 				},
 				NodeTermIdentifier => {
 					var identifier_value = NodeTermIdentifier.identifier.value;
-					Variable[] values = variables.Where(variable => variable.name == identifier_value).ToArray();
-					if (values.Length != 1) {
+					var values = variables.FindAll(variable => variable.name == identifier_value);
+					if (values.Count != 1) {
 						Console.Error.WriteLine("Error: Undeclared identifier `" + identifier_value + "`");
 						Environment.Exit(0);
 					}
@@ -154,9 +154,8 @@ static class Generator {
 				},
 				NodeStatementVar => {
 					var identifier_value = NodeStatementVar.identifier.value;
-					Variable[] values = variables.Where(variable => variable.name == identifier_value).ToArray();
-
-					if (values.Length > 0) {
+					var values = variables.FindAll(variable => variable.name == identifier_value);
+					if (values.Count > 0) {
 						Console.Error.WriteLine("Error: Identifier `" + identifier_value + "` is already declared");
 						Environment.Exit(0);
 					}
@@ -170,6 +169,16 @@ static class Generator {
 					string final_label = create_label();
 					GenerateIf(NodeStatementIf, final_label);
 					output += final_label + ":\n";
+				},
+				NodeStatementAssign => {
+					string? identifier_value = NodeStatementAssign.identifier.value;
+					var values = variables.FindAll(variable => variable.name == identifier_value);
+					if (values.Count == 0) {
+						Program.Error("Error: Undeclared identifier `" + identifier_value + "`");
+					}
+					GenerateExpression(NodeStatementAssign.expression);
+					pop("rax");
+					output += "\tmov [rsp + " + (stack_size - values[0].stack_location - 1) * 8 + " ], rax\n";
 				}
 			);
 		}
@@ -190,11 +199,9 @@ static class Generator {
 			}
 		}
 
-		unsafe void GenerateElseIf(NodeIfPredicateElseIf if_, string final_label) {
-			GenerateIf(*(NodeStatementIf*)&if_, final_label);
-		}
+        unsafe void GenerateElseIf(NodeIfPredicateElseIf if_, string final_label) => GenerateIf(*(NodeStatementIf*)&if_, final_label);
 
-		foreach (NodeStatement nodesStatement in root.statements) {
+        foreach (NodeStatement nodesStatement in root.statements) {
 			GenerateStatement(nodesStatement);
 		}
 
