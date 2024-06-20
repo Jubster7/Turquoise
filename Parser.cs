@@ -109,12 +109,12 @@ static class Parser {
 			if (try_consume_out(TokenType.open_parentheses, out Token? open_parentheses)) {
 				var expression = ParseExpression();
 				if (!expression.HasValue) {
-					Program.Error("Error: Expected expression");
+					Program.ErrorExpected("expression", peek());
 				}
 
 				var term_parentheses = new NodeTermParentheses { expression = Allocate(expression.Value) };
 
-				try_consume_error(TokenType.close_parentheses, "Expected `)`");
+				try_consume_error(TokenType.close_parentheses, ")");
                 return new NodeTerm {term = term_parentheses};
 			}
 			return null;
@@ -140,7 +140,7 @@ static class Parser {
 				var expression_rhs = ParseExpression(next_min_precedence);
 
 				if (!expression_rhs.HasValue) {
-					Program.Error("Error: Unable to parse expression");
+					Program.Error("Unable to parse expression", peek());
 				}
 
 				var expression = new NodeBinaryExpression();
@@ -165,7 +165,7 @@ static class Parser {
                         rhs = Allocate(expression_rhs.Value)
 					};
 				} else {
-					Program.Error("Error: parsing of " + type + " operator not defined");
+					Program.Error("parsing of " + type + " operator not defined", peek());
 
 				}
 				expression_lhs.expression = expression;
@@ -184,27 +184,25 @@ static class Parser {
 				scope.statements.Add(statement.Value);
 			}
 
-			try_consume_error(TokenType.close_brace, "Error: Expected `}`");
+			try_consume_error(TokenType.close_brace, "}");
 			return scope;
 		}
 
 		unsafe NodeIfPredicate? ParseIfPredicate() {
 			if (try_consume(TokenType.else_)) {
 				if (try_consume(TokenType.if_)) {
-					try_consume_error(TokenType.open_parentheses, "Error: Expected `(`");
+					try_consume_error(TokenType.open_parentheses, "(");
 					NodeIfPredicateElseIf else_if_predicate = new NodeIfPredicateElseIf {};
 					var expression = ParseExpression();
 					if (expression.HasValue) {
 						else_if_predicate.expression = expression.Value;
 					} else {
-						Program.Error("Error: Expected expression");
+						Program.ErrorExpected("expression", peek());
 					}
-					try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
+					try_consume_error(TokenType.close_parentheses, ")");
 					var else_if_statement = ParseStatement();
 					if (else_if_statement.HasValue) {
 						else_if_predicate.statement = Allocate(else_if_statement.Value);
-					} else {
-						//Program.Error("Error: Expected statement");
 					}
 					else_if_predicate.predicate = Allocate(ParseIfPredicate());
 					return new NodeIfPredicate{predicate = else_if_predicate};
@@ -213,8 +211,6 @@ static class Parser {
 				var else_statement = ParseStatement();
 				if (else_statement.HasValue) {
 					else_predicate.statement = Allocate(else_statement.Value);
-				} else {
-					//Program.Error("Error: Expected statement");
 				}
 				return new NodeIfPredicate{predicate = else_predicate};
 			}
@@ -224,26 +220,26 @@ static class Parser {
 
 		NodeStatement? ParseStatement() {
 			if (try_consume(TokenType.exit)) {
-				try_consume_error(TokenType.open_parentheses,  "Error: Expected `(`");
+				try_consume_error(TokenType.open_parentheses,  "(");
 				NodeStatementExit statementExit;
 				NodeExpression? expression;
 				if((expression = ParseExpression()).HasValue) {
 					statementExit = new NodeStatementExit {expression = expression.Value };
 				} else {
-					Program.Error("Error: Unable to parse Expression");
+					Program.Error("Unable to parse Expression", peek());
 					return null;
 				}
-				try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
-				try_consume_error(TokenType.semicolon, "Error: Expected `;`");
+				try_consume_error(TokenType.close_parentheses, ")");
+				try_consume_error(TokenType.semicolon, ";");
 				return new NodeStatement {statement = statementExit};
 			}
 			if ( try_consume(TokenType.var)) {
 
 				if (!try_consume_out(TokenType.identifier, out var statement_identifier)) {
-					Program.Error("Error: Expected identifier");
+					Program.ErrorExpected("identifier", peek());
 				}
 
-				try_consume_error(TokenType.equals, "Error: Expected `=`");
+				try_consume_error(TokenType.equals, "=");
 
 				NodeStatementVar statementVar = new NodeStatementVar {identifier = statement_identifier.Value};
 
@@ -251,10 +247,10 @@ static class Parser {
 				if (expression.HasValue) {
 					statementVar.expression = expression.Value;
 				} else {
-					Program.Error("Error: Invalid Expression");
+					Program.Error("Invalid Expression", peek());
 				}
 
-				try_consume_error(TokenType.semicolon, "Error: Expected `;`");
+				try_consume_error(TokenType.semicolon, ";");
 				return new NodeStatement {statement = statementVar};
 			}
 			if (peek().HasValue && peek().Value.type == TokenType.identifier && peek(1).HasValue && peek(1).Value.type == TokenType.equals) {
@@ -264,29 +260,29 @@ static class Parser {
 				if (expression.HasValue) {
 					assign.expression = expression.Value;
 				} else {
-					Program.Error("Error: Expected expression");
+					Program.ErrorExpected("expression", peek());
 				}
-				try_consume_error(TokenType.semicolon, "Error: Expected `;`");
+				try_consume_error(TokenType.semicolon, ";");
 				return new NodeStatement {statement = assign};
 			}
 			if (peek().HasValue && peek().Value.type == TokenType.open_brace) {
 				var scope = ParseScope();
 				if (!scope.HasValue) {
-					Program.Error("Error: Expected `{`");
+					Program.Error("{", peek());
 				}
 				return new NodeStatement{statement = scope.Value};
 			}
 			if (try_consume_out(TokenType.if_, out var if_)) unsafe {
-				try_consume_error(TokenType.open_parentheses, "Error: Expected `(`");
+				try_consume_error(TokenType.open_parentheses, "(");
 				var expression = ParseExpression();
 				if (!expression.HasValue) {
-					Program.Error("Error: Invalid Expression");
+					Program.Error("Invalid Expression", peek());
 				}
 				var statement_if = new NodeStatementIf{expression = expression.Value};
-				try_consume_error(TokenType.close_parentheses, "Error: Expected `)`");
+				try_consume_error(TokenType.close_parentheses, ")");
 				var statement = ParseStatement();
 				if (statement.HasValue) {
-					if (statement.Value.statement.IsT1) Program.Error("Error: Variable declaration not allowed on non scoped if statements");
+					if (statement.Value.statement.IsT1) Program.Error("Variable declaration not allowed on non scoped if statements", peek());
 					statement_if.statement = Allocate(statement.Value);
 				} else {
 
@@ -294,11 +290,10 @@ static class Parser {
 				statement_if.predicate = Allocate(ParseIfPredicate());
                 return new NodeStatement {statement = statement_if};
 			}
-			if (peek().HasValue && peek().Value.type == TokenType.close_brace) {
+			if (peek().HasValue && peek().Value.type == TokenType.semicolon) {
+				consume();
 				return null;
 			}
-
-			try_consume_error(TokenType.semicolon, "Error: Statement cannot start with " + peek().Value.type + " token");
 
 			return null;
 		}
@@ -315,9 +310,9 @@ static class Parser {
 			return tokens[index++];
 		}
 
-		void try_consume_error(in TokenType tokenType, in string error_message) {
+		void try_consume_error(in TokenType tokenType, in string expected) {
 			if (!(peek().HasValue && peek().Value.type == tokenType)) {
-				Program.Error(error_message);
+				Program.ErrorExpected(expected, peek());
 			}
 			consume();
 		}
@@ -345,8 +340,6 @@ static class Parser {
 			NodeStatement? statement = ParseStatement();
 			if (statement.HasValue) {
 				program.statements.Add(statement.Value);
-			} else {
-				//Program.Error("Error: Invalid Statement");
 			}
 		}
 

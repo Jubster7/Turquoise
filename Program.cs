@@ -14,6 +14,8 @@ class Program {
 	const string linker_command = @"gcc -arch x86_64 -o " + out_executable_file_path + " " + out_object_file_path;
 	const bool throw_on_compile_error = false;
 
+	static int total_line_count;
+	static int total_column_count;
 	static void Main(string[] args) {
 		if (args.Length == 1) {
 			in_file_path = args[0];
@@ -33,7 +35,7 @@ class Program {
 
 	static string Compile(string input_file_contents) {
 		Console.ForegroundColor = ConsoleColor.Red;
-		List<Token> tokens = Tokenizer.Tokenize(input_file_contents);
+		List<Token> tokens = Tokenizer.Tokenize(input_file_contents, out total_line_count, out total_column_count);
 		NodeProgram program = Parser.Parse(tokens);
 		return Generator.Generate(program);
 	}
@@ -58,6 +60,16 @@ class Program {
 		process.WaitForExit();
 	}
 
+	public static void Error(string error_message, Token? peek_value) {
+		string output = "Error at line: " + (peek_value.HasValue ? peek_value.Value.line_count + " column: " + peek_value.Value.column_count : total_line_count + " column: " + total_column_count) + ", " + error_message;
+		if (throw_on_compile_error) {
+			throw new Exception(output);
+		} else {
+			Console.Error.WriteLine(output);
+			Exit(0);
+		}
+	}
+
 	public static void Error(string error_message) {
 		if (throw_on_compile_error) {
 			throw new Exception(error_message);
@@ -65,5 +77,9 @@ class Program {
 			Console.Error.WriteLine(error_message);
 			Exit(0);
 		}
+	}
+
+    public static void ErrorExpected(in string expected_string, Token? peek_value) {
+		Error("Expected `" + expected_string + "`", peek_value);
 	}
 }

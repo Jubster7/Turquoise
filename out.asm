@@ -36,9 +36,6 @@ label1:
 	mov [rsp + 0 ], rax
 	jmp label0
 label2:
-	push 3
-	pop rax
-	mov [rsp + 0 ], rax
 label0:
 	push QWORD [rsp + 0]
 	mov rax, 33554433
