@@ -1,4 +1,2 @@
 .DS_STORE
-node_modules/
-.vscode/
-settings.json
+**/.vscode/
