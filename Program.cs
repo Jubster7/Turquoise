@@ -12,10 +12,7 @@ class Program {
 
 	const string assembler_command = @"nasm -f macho64 " + out_file_path;
 	const string linker_command = @"gcc -arch x86_64 -o " + out_executable_file_path + " " + out_object_file_path;
-	static readonly bool throw_on_compile_error = true;
-
-	static int total_line_count;
-	static int total_column_count;
+	static readonly bool throw_on_compile_error = false;
 
 	static void Main(string[] args) {
 		if (args.Length == 1) {
@@ -36,7 +33,7 @@ class Program {
 
 	static string Compile(in string input_file_contents) {
 		Console.ForegroundColor = ConsoleColor.Red;
-		List<Token> tokens = Tokenizer.Tokenize(input_file_contents, out total_line_count, out total_column_count);
+		List<Token> tokens = Tokenizer.Tokenize(input_file_contents);
 		NodeProgram program = Parser.Parse(tokens);
 		return Generator.Generate(program);
 	}
@@ -61,8 +58,9 @@ class Program {
 		process.WaitForExit();
 	}
 
-	public static void Error(in string error_message, in Token? peek_value) {
-		string output = "Error at line: " + (peek_value.HasValue ? peek_value.Value.line_number + " column: " + peek_value.Value.column_number : total_line_count + " column: " + total_column_count) + ", " + error_message;
+	public static void Error(in string error_message, in int line_number, in int column_number) {
+		Console.ForegroundColor = ConsoleColor.Red;
+		string output = "Error at line: " + line_number + " column: " + column_number  + ", " + error_message;
 		if (throw_on_compile_error) {
 			throw new Exception(output);
 		} else {
@@ -72,6 +70,7 @@ class Program {
 	}
 
 	public static void Error(in string error_message) {
+		Console.ForegroundColor = ConsoleColor.Red;
 		if (throw_on_compile_error) {
 			throw new Exception(error_message);
 		} else {

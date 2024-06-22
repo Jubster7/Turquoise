@@ -5,7 +5,7 @@ if (x) {
 
 } else if (x) {
 
- else {
+} else {
 
 }
 

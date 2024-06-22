@@ -34,7 +34,8 @@ static class Generator {
 					var identifier_value = NodeTermIdentifier.identifier.value;
 					var values = variables.FindAll(variable => variable.name == identifier_value);
 					if (values.Count != 1) {
-						Program.Error("Undeclared identifier `" + identifier_value + "`", NodeTermIdentifier.identifier);
+						var (line_number, column_number, _) = NodeTermIdentifier.identifier;
+						Program.Error("Undeclared identifier `" + identifier_value + "`", line_number, column_number);
 					}
 					push("QWORD [rsp + " + (stack_size - values[0].stack_location - 1) * 8 + "]");
 				},
@@ -154,7 +155,8 @@ static class Generator {
 					var identifier_value = NodeStatementVar.identifier.value;
 					var values = variables.FindAll(variable => variable.name == identifier_value);
 					if (values.Count > 0) {
-						Program.Error("Identifier `" + identifier_value + "` is already declared", NodeStatementVar.identifier);
+						var (line_number, column_number, _) = NodeStatementVar.identifier;
+						Program.Error("Identifier `" + identifier_value + "` is already declared", line_number, column_number);
 					}
 					variables.Add(new Variable { name = identifier_value + "", stack_location = stack_size });
 					GenerateExpression(NodeStatementVar.expression);
@@ -171,7 +173,8 @@ static class Generator {
 					string? identifier_value = NodeStatementAssign.identifier.value;
 					var values = variables.FindAll(variable => variable.name == identifier_value);
 					if (values.Count == 0) {
-						Program.Error("Undeclared identifier `" + identifier_value + "`", NodeStatementAssign.identifier);
+						var (line_number, column_number, _) = NodeStatementAssign.identifier;
+						Program.Error("Undeclared identifier `" + identifier_value + "`", line_number, column_number);
 					}
 					GenerateExpression(NodeStatementAssign.expression);
 					pop("rax");

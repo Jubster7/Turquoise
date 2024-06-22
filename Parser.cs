@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using OneOf;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
-//#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 
 namespace Turquoise;
 struct NodeTermIntLiteral() {
@@ -46,7 +46,7 @@ unsafe struct NodeTermParentheses {
 	public NodeExpression* expression;
 }
 
-unsafe struct NodeExpression {
+struct NodeExpression {
 	public OneOf<NodeTerm, NodeBinaryExpression> expression;
 }
 
@@ -141,7 +141,7 @@ static class Parser {
 				var expression_rhs = ParseExpression(next_min_precedence);
 
 				if (!expression_rhs.HasValue) {
-					Program.Error("Unable to parse expression", peek());
+					Error("Unable to parse expression");
 				}
 
 				var expression = new NodeBinaryExpression();
@@ -166,7 +166,7 @@ static class Parser {
                         rhs = Allocate(expression_rhs.Value)
 					};
 				} else {
-					Program.Error("parsing of " + type.Name() + " operator not defined", peek());
+					Error("parsing of " + type.Name() + " operator not defined");
 				}
 				expression_lhs.expression = expression;
 			}
@@ -226,7 +226,7 @@ static class Parser {
 				if((expression = ParseExpression()).HasValue) {
 					statementExit = new NodeStatementExit {expression = expression.Value };
 				} else {
-					Program.Error("Unable to parse Expression", peek());
+					Error("Unable to parse Expression");
 					return null;
 				}
 				try_consume_error(TokenType.close_parentheses);
@@ -245,7 +245,7 @@ static class Parser {
 				if (expression.HasValue) {
 					statementVar.expression = expression.Value;
 				} else {
-					Program.Error("Invalid Expression", peek());
+					Error("Invalid Expression");
 				}
 
 				try_consume_error(TokenType.semicolon);
@@ -274,13 +274,13 @@ static class Parser {
 				try_consume_error(TokenType.open_parentheses);
 				var expression = ParseExpression();
 				if (!expression.HasValue) {
-					Program.Error("Invalid Expression", peek());
+					ErrorExpected("expression");
 				}
 				var statement_if = new NodeStatementIf{expression = expression.Value};
 				try_consume_error(TokenType.close_parentheses);
 				var statement = ParseStatement();
 				if (statement.HasValue) {
-					if (statement.Value.statement.IsT1) Program.Error("Variable declaration not allowed on non scoped if statements", peek());
+					if (statement.Value.statement.IsT1) Error("Variable declaration not allowed on non scoped if statements");
 					statement_if.statement = Allocate(statement.Value);
 				}
 				statement_if.predicate = Allocate(ParseIfPredicate());
@@ -294,7 +294,7 @@ static class Parser {
 				return null;
 			}
 			if (peek().HasValue) {
-				Program.Error("Statement cannot start with " + peek().Value.type.Name(), peek());
+				Error("Statement cannot start with " + peek().Value.type.Name());
 				return null;
 			} else {
 				ErrorExpectedToken(TokenType.close_brace);
@@ -338,12 +338,17 @@ static class Parser {
 			return false;
 		}
 
+		void Error(in string error_message) {
+			var (line_number, column_number, _) = peek() ?? tokens.Last();
+			Program.Error(error_message, line_number, column_number);
+		}
+
 		void ErrorExpected(in string expected_string) {
-			Program.Error("Expected " + expected_string, peek());
+			Error("Expected " + expected_string);
 		}
 
 		void ErrorExpectedToken(in TokenType expected_token) {
-			Program.Error("Expected " + expected_token.Name(), peek());
+			Error("Expected " + expected_token.Name());
 		}
 
 		NodeProgram program =  new NodeProgram{statements = []};

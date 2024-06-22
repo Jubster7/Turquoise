@@ -25,12 +25,19 @@ public enum TokenType {
 struct Token {
 	public TokenType type;
 	public string? value;
+	public int line_number;
+	public int column_number;
+
 	public readonly void Deconstruct(out TokenType type , out string? value) {
 		type = this.type;
 		value = this.value;
 	}
-	public int line_number;
-	public int column_number;
+
+	public readonly void Deconstruct(out int line_number , out int column_number, out TokenType type) {
+		line_number = this.line_number;
+		column_number = this.column_number;
+		type = this.type;
+	}
 }
 
 static class Tokenizer {
@@ -67,12 +74,12 @@ static class Tokenizer {
         };
 	}
 
-	public static List<Token> Tokenize(in string file_contents) {
-		return Tokenize(file_contents, out _, out _);
-	}
-
-	public static List<Token> Tokenize(string file_contents, out int total_line_count, out int total_column_count) {
-
+	/// <summary>
+	/// Converts a string input in to a <see cref="Token"/>
+	/// </summary>
+	/// <param name="file_contents">The input string to Tokenize</param>
+	/// <returns></returns>
+	[Pure] public static List<Token> Tokenize(string file_contents) {
 		int index = 0;
 		int line_count = 1;
 		int column_count = 1;
@@ -110,8 +117,9 @@ static class Tokenizer {
 		}
 
 		void ErrorExpected(in string expected_string, int line_number, int column_number) {
-			Program.Error("Expected `" + expected_string + "`", new Token {line_number = line_number, column_number = column_number + 1});
+			Program.Error("Expected `" + expected_string + "`", line_number , column_number + 1);
 		}
+
 
 		List<Token> tokens = [];
 		while (peek().HasValue) {
@@ -194,8 +202,6 @@ static class Tokenizer {
 				Program.Error("Error: Invalid Character `" + peek() + "`");
 			}
 		}
-		total_line_count = line_count;
-		total_column_count = column_count + 1;
 		return tokens;
 	}
 }
