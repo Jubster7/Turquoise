@@ -2,3 +2,6 @@
 .vscode/
 obj/
 bin/
+out
+out.asm
+out.o
