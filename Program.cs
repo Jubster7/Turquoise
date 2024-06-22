@@ -12,10 +12,11 @@ class Program {
 
 	const string assembler_command = @"nasm -f macho64 " + out_file_path;
 	const string linker_command = @"gcc -arch x86_64 -o " + out_executable_file_path + " " + out_object_file_path;
-	const bool throw_on_compile_error = false;
+	static readonly bool throw_on_compile_error = true;
 
 	static int total_line_count;
 	static int total_column_count;
+
 	static void Main(string[] args) {
 		if (args.Length == 1) {
 			in_file_path = args[0];
@@ -33,14 +34,14 @@ class Program {
 		ExecuteCommand(assembler_command + " && " + linker_command);
 	}
 
-	static string Compile(string input_file_contents) {
+	static string Compile(in string input_file_contents) {
 		Console.ForegroundColor = ConsoleColor.Red;
 		List<Token> tokens = Tokenizer.Tokenize(input_file_contents, out total_line_count, out total_column_count);
 		NodeProgram program = Parser.Parse(tokens);
 		return Generator.Generate(program);
 	}
 
-	static void ExecuteCommand(string command) {
+	static void ExecuteCommand(in string command) {
 		Process process = new Process {
 			StartInfo = new ProcessStartInfo {
 				FileName = "/bin/bash",
@@ -60,8 +61,8 @@ class Program {
 		process.WaitForExit();
 	}
 
-	public static void Error(string error_message, Token? peek_value) {
-		string output = "Error at line: " + (peek_value.HasValue ? peek_value.Value.line_count + " column: " + peek_value.Value.column_count : total_line_count + " column: " + total_column_count) + ", " + error_message;
+	public static void Error(in string error_message, in Token? peek_value) {
+		string output = "Error at line: " + (peek_value.HasValue ? peek_value.Value.line_number + " column: " + peek_value.Value.column_number : total_line_count + " column: " + total_column_count) + ", " + error_message;
 		if (throw_on_compile_error) {
 			throw new Exception(output);
 		} else {
@@ -70,16 +71,12 @@ class Program {
 		}
 	}
 
-	public static void Error(string error_message) {
+	public static void Error(in string error_message) {
 		if (throw_on_compile_error) {
 			throw new Exception(error_message);
 		} else {
 			Console.Error.WriteLine(error_message);
 			Exit(0);
 		}
-	}
-
-    public static void ErrorExpected(in string expected_string, Token? peek_value) {
-		Error("Expected `" + expected_string + "`", peek_value);
 	}
 }

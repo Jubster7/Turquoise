@@ -29,8 +29,8 @@ struct Token {
 		type = this.type;
 		value = this.value;
 	}
-	public int line_count;
-	public int column_count;
+	public int line_number;
+	public int column_number;
 }
 
 static class Tokenizer {
@@ -43,6 +43,28 @@ static class Tokenizer {
 			TokenType.forward_slash => 1,
 			_ => null
 		};
+	}
+
+	public static string Name(this TokenType type) {
+		return type switch {
+            TokenType.exit => "`exit`",
+            TokenType.int_literal => "integer literal",
+            TokenType.semicolon => "`;`",
+            TokenType.open_parentheses => "`(`",
+            TokenType.close_parentheses => "`)`",
+            TokenType.open_brace => "`{`",
+            TokenType.close_brace => "`}`",
+            TokenType.identifier => "identifier",
+            TokenType.var => "`var`",
+            TokenType.equals => "`=`",
+            TokenType.plus => "`+`",
+            TokenType.minus => "`-`",
+            TokenType.asterisk => "`*`",
+            TokenType.forward_slash => "`/`",
+            TokenType.if_ => "`if`",
+            TokenType.else_ => "`else`",
+			_ => throw new NotImplementedException("Cannot convert " + type + " to string")
+        };
 	}
 
 	public static List<Token> Tokenize(in string file_contents) {
@@ -63,6 +85,20 @@ static class Tokenizer {
 		}
 
 		char consume() {
+			check_count();
+			return file_contents[index++];
+		}
+
+		string consume_multi(int count = 0) {
+			check_count();
+			var output = "";
+			for (int i = 0; i < count; i++) {
+				output += file_contents[index++];
+			}
+			return output;
+		}
+
+		void check_count() {
 			if (peek().Value == '\t') {
 				column_count += 4;
 			} else if (peek().Value == '\n') {
@@ -71,9 +107,10 @@ static class Tokenizer {
 			} else {
 				column_count++;
 			}
+		}
 
-
-			return file_contents[index++];
+		void ErrorExpected(in string expected_string, int line_number, int column_number) {
+			Program.Error("Expected `" + expected_string + "`", new Token {line_number = line_number, column_number = column_number + 1});
 		}
 
 		List<Token> tokens = [];
@@ -81,6 +118,9 @@ static class Tokenizer {
 			if (char.IsLetter(peek().Value)) {
 				string buffer = string.Empty;
 				buffer += consume();
+				int line_count_start = line_count;
+				int column_count_start = column_count;
+
 				while (peek().HasValue && char.IsLetterOrDigit(peek().Value)) {
 					buffer += consume();
 				}
@@ -93,62 +133,61 @@ static class Tokenizer {
 					_ => (TokenType.identifier, buffer),
 				};
 
-				tokens.Add(new Token{type = token_type, value = token_value, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token{type = token_type, value = token_value, line_number = line_count_start, column_number = column_count_start});
 			} else if (char.IsDigit(peek().Value)) {
 				string buffer = string.Empty;
 				buffer += consume();
+				int line_count_start = line_count;
+				int column_count_start = column_count;
 				while (peek().HasValue && char.IsDigit(peek().Value)) {
 					buffer += consume();
 				}
-				tokens.Add(new Token { type = TokenType.int_literal, value = buffer, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.int_literal, value = buffer, line_number = line_count_start, column_number = column_count_start});
 			} else if (peek().Value == '/' && peek(1).HasValue && peek(1).Value == '/') {
-				consume();
-				consume();
+				consume_multi(2);
 				while (peek().HasValue && peek().Value != '\n') {
 					consume();
 				}
 			} else if (peek().Value == '/' && peek(1).HasValue && peek(1).Value == '*') {
-				consume();
-				consume();
+				consume_multi(2);
 				while (peek().HasValue && peek(1).HasValue && (peek(1).Value != '/' || peek().Value != '*')) {
 					consume();
 				}
 				if (peek().HasValue && peek(1).HasValue) {
-					consume();
-					consume();
+					consume_multi(2);
 				} else {
-					Program.ErrorExpected("*/", new Token {line_count = line_count, column_count = column_count + 1});
+					ErrorExpected("*/", line_count, column_count);
 				}
 			} else if (peek().Value == '(') {
 				consume();
-				tokens.Add(new Token { type = TokenType.open_parentheses, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.open_parentheses, line_number = line_count, column_number = column_count});
 			} else if (peek().Value == '{') {
 				consume();
-				tokens.Add(new Token { type = TokenType.open_brace, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.open_brace, line_number = line_count, column_number = column_count});
 			} else if (peek().Value == '}') {
 				consume();
-				tokens.Add(new Token { type = TokenType.close_brace, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.close_brace, line_number = line_count, column_number = column_count});
 			} else if (peek().Value == ')') {
 				consume();
-				tokens.Add(new Token { type = TokenType.close_parentheses, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.close_parentheses, line_number = line_count, column_number = column_count});
 			} else if ( peek().Value == ';') {
 				consume();
-				tokens.Add(new Token { type = TokenType.semicolon, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.semicolon, line_number = line_count, column_number = column_count});
 			} else if ( peek().Value == '=') {
 				consume();
-				tokens.Add(new Token { type = TokenType.equals, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.equals, line_number = line_count, column_number = column_count});
 			} else if ( peek().Value == '+') {
 				consume();
-				tokens.Add(new Token { type = TokenType.plus, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.plus, line_number = line_count, column_number = column_count});
 			} else if ( peek().Value == '-') {
 				consume();
-				tokens.Add(new Token { type = TokenType.minus, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.minus, line_number = line_count, column_number = column_count});
 			} else if ( peek().Value == '*') {
 				consume();
-				tokens.Add(new Token { type = TokenType.asterisk, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.asterisk, line_number = line_count, column_number = column_count});
 			} else if ( peek().Value == '/') {
 				consume();
-				tokens.Add(new Token { type = TokenType.forward_slash, line_count = line_count, column_count = column_count});
+				tokens.Add(new Token { type = TokenType.forward_slash, line_number = line_count, column_number = column_count});
 			} else if (char.IsWhiteSpace(peek().Value)) {
 				consume();
 			} else {

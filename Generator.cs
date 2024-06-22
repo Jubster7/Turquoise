@@ -1,5 +1,4 @@
 using System.Diagnostics.Contracts;
-using System.Reflection.Emit;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
@@ -177,7 +176,8 @@ static class Generator {
 					GenerateExpression(NodeStatementAssign.expression);
 					pop("rax");
 					output += "\tmov [rsp + " + (stack_size - values[0].stack_location - 1) * 8 + " ], rax\n";
-				}
+				},
+				NodeStatementEmpty => {}
 			);
 		}
 
@@ -187,9 +187,7 @@ static class Generator {
 			string label = create_label();
 			output += "\ttest rax, rax\n";
 			output += "\tjz " + (if_.predicate->HasValue ? label : final_label) + "\n";
-			if (if_.statement != null) {
-				GenerateStatement(*if_.statement);
-			}
+			GenerateStatement(*if_.statement);
 			if (if_.predicate->HasValue) {
 				output += "\tjmp " + final_label + "\n";
 				output += label + ":\n";
