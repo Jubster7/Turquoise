@@ -7,7 +7,7 @@ namespace Turquoise;
 enum SystemCall {
 	exit = 0x2000001,
 	//read = 0x20000003,
-	//write = 0x20000004,
+	write = 0x20000004,
 	//sleep = 0x20000240,
 }
 

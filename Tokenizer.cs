@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using OneOf.Types;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
 
@@ -41,7 +42,11 @@ struct Token {
 }
 
 static class Tokenizer {
-
+	/// <summary>
+	///	gets to precedence of the specified token
+	/// </summary>
+	/// <param name="type"></param>
+	/// <returns>The precedence of the operator</returns>
 	public static int? OperatorPrecedence(this TokenType type) {
 		return type switch {
 			TokenType.plus => 0,
@@ -51,7 +56,11 @@ static class Tokenizer {
 			_ => null
 		};
 	}
-
+	/// <summary>
+	///	Gets the name of the specified token type
+	/// </summary>
+	/// <param name="type">The TokenType to get the name of</param>
+	/// <returns>A string containing the name of the TokenType</returns>
 	public static string Name(this TokenType type) {
 		return type switch {
             TokenType.exit => "`exit`",
@@ -78,7 +87,7 @@ static class Tokenizer {
 	/// Converts a string input in to a <see cref="Token"/>
 	/// </summary>
 	/// <param name="file_contents">The input string to Tokenize</param>
-	/// <returns></returns>
+	/// <returns>A list containing the tokens in file_contents</returns>
 	[Pure] public static List<Token> Tokenize(string file_contents) {
 		int index = 0;
 		int line_count = 1;

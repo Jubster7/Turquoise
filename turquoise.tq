@@ -9,7 +9,7 @@ if (x) {
 
 }
 
-if (0) ; else if (1) exit(1);
+if (0) ; else if (1) exit(10);
 	;;;;;
 	exit(x);
 
@@ -17,8 +17,8 @@ if (0) ; else if (1) exit(1);
 unary operators
 reassignment operators
 functions
-booleans
-comparison
+booleans / () operator
+comparison operators
 strings
 text output
 text input
