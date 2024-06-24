@@ -58,7 +58,6 @@ struct NodeScope {
 	public List<NodeStatement> statements;
 }
 
-
 unsafe struct NodeIfPredicateElseIf {
 	public NodeExpression expression;
 	public NodeStatement* statement;
@@ -68,6 +67,7 @@ unsafe struct NodeIfPredicateElseIf {
 unsafe struct NodeIfPredicateElse {
 	public NodeStatement* statement;
 }
+
 struct NodeIfPredicate {
 	public OneOf<NodeIfPredicateElseIf, NodeIfPredicateElse> predicate;
 }
@@ -82,6 +82,7 @@ struct NodeStatementAssign {
 	public Token identifier;
 	public NodeExpression expression;
 }
+
 struct NodeStatementEmpty;
 
 struct NodeStatement {
@@ -98,7 +99,19 @@ struct NodeProgram() {
 }
 
 static class Parser {
+	private static unsafe T* Allocate<T>(in T value) {
+		var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
+		*ptr = value;
+		return ptr;
+	}
+
+	private static unsafe T* Allocate<T>() {
+		return (T*)Marshal.AllocCoTaskMem(sizeof(T));
+	}
+
 	public static NodeProgram Parse(List<Token> tokens) {
+		int index = 0;
+		NodeProgram program = new NodeProgram{statements = []};
 
 		unsafe NodeTerm? ParseTerm() {
 			if (try_consume_out(TokenType.int_literal, out Token? int_literal)) {
@@ -116,7 +129,7 @@ static class Parser {
 				var term_parentheses = new NodeTermParentheses { expression = Allocate(expression.Value) };
 
 				try_consume_error(TokenType.close_parentheses);
-                return new NodeTerm {term = term_parentheses};
+				return new NodeTerm {term = term_parentheses};
 			}
 			return null;
 		}
@@ -128,8 +141,8 @@ static class Parser {
 
 			while (true) {
 				Token? current_token = peek();
-                int? precedence;
-                if (current_token.HasValue) {
+				int? precedence;
+				if (current_token.HasValue) {
 					precedence = current_token.Value.type.OperatorPrecedence();
 					if (!precedence.HasValue || precedence < min_precedence) break;
 				} else {
@@ -137,7 +150,7 @@ static class Parser {
 				}
 
 				int next_min_precedence = precedence.Value + 1;
-                TokenType type = consume().type;
+				TokenType type = consume().type;
 				var expression_rhs = ParseExpression(next_min_precedence);
 
 				if (!expression_rhs.HasValue) {
@@ -147,23 +160,23 @@ static class Parser {
 				var expression = new NodeBinaryExpression();
 				if (type == TokenType.plus) {
 					expression.binary_expression = new NodeBinaryExpressionAddition {
-                        lhs = Allocate(expression_lhs),
-                    	rhs = Allocate(expression_rhs.Value)
-                    };
+						lhs = Allocate(expression_lhs),
+						rhs = Allocate(expression_rhs.Value)
+					};
 				} else if (type == TokenType.asterisk) {
 					expression.binary_expression = new NodeBinaryExpressionMultiplication {
-                        lhs = Allocate(expression_lhs),
-                        rhs = Allocate(expression_rhs.Value)
-                    };
+						lhs = Allocate(expression_lhs),
+						rhs = Allocate(expression_rhs.Value)
+					};
 				} else if (type == TokenType.minus) {
 					expression.binary_expression = new NodeBinaryExpressionSubtraction {
-                        lhs = Allocate(expression_lhs),
-                        rhs = Allocate(expression_rhs.Value)
-                    };
+						lhs = Allocate(expression_lhs),
+						rhs = Allocate(expression_rhs.Value)
+					};
 				} else if (type == TokenType.forward_slash) {
 					expression.binary_expression = new NodeBinaryExpressionDivision {
-                        lhs = Allocate(expression_lhs),
-                        rhs = Allocate(expression_rhs.Value)
+						lhs = Allocate(expression_lhs),
+						rhs = Allocate(expression_rhs.Value)
 					};
 				} else {
 					Error("parsing of " + type.Name() + " operator not defined");
@@ -218,7 +231,7 @@ static class Parser {
 			return null;
 		}
 
-		NodeStatement? ParseStatement(bool in_scope = false) {
+		NodeStatement? ParseStatement(in bool in_scope = false) {
 			if (try_consume(TokenType.exit)) {
 				try_consume_error(TokenType.open_parentheses);
 				NodeStatementExit statementExit;
@@ -284,7 +297,7 @@ static class Parser {
 					statement_if.statement = Allocate(statement.Value);
 				}
 				statement_if.predicate = Allocate(ParseIfPredicate());
-                return new NodeStatement {statement = statement_if};
+				return new NodeStatement {statement = statement_if};
 			}
 			if (peek().HasValue && peek().Value.type == TokenType.semicolon) {
 				consume();
@@ -302,7 +315,6 @@ static class Parser {
 			}
 		}
 
-		int index = 0;
 		[Pure] Token? peek(in int offset = 0) {
 			if (index + offset >= tokens.Count) {
 				return null;
@@ -351,25 +363,12 @@ static class Parser {
 			Error("Expected " + expected_token.Name());
 		}
 
-		NodeProgram program =  new NodeProgram{statements = []};
-
 		while (peek().HasValue) {
 			NodeStatement? statement = ParseStatement();
 			if (statement.HasValue) {
 				program.statements.Add(statement.Value);
 			}
 		}
-
 		return program;
 	}
-
-    private static unsafe T* Allocate<T>(in T value) {
-        var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
-        *ptr = value;
-        return ptr;
-    }
-
-    private static unsafe T* Allocate<T>() {
-        return (T*)Marshal.AllocCoTaskMem(sizeof(T));
-    }
 }

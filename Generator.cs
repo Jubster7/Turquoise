@@ -133,8 +133,8 @@ static class Generator {
 		unsafe void GenerateIfPredicate(in NodeIfPredicate predicate, string final_label) {
 			predicate.predicate.Switch(
 				NodeIfPredicateElseIf => {
-                    GenerateElseIf(NodeIfPredicateElseIf, final_label);
-                },
+					GenerateElseIf(NodeIfPredicateElseIf, final_label);
+				},
 				NodeIfPredicateElse => {
 					if (NodeIfPredicateElse.statement != null) {
 						GenerateStatement(*NodeIfPredicateElse.statement);
@@ -184,7 +184,7 @@ static class Generator {
 			);
 		}
 
-		unsafe void GenerateIf(in NodeStatementIf if_, string final_label) {
+		unsafe void GenerateIf(in NodeStatementIf if_, in string final_label) {
 			GenerateExpression(if_.expression);
 			pop("rax");
 			string label = create_label();
@@ -198,9 +198,11 @@ static class Generator {
 			}
 		}
 
-        unsafe void GenerateElseIf(NodeIfPredicateElseIf if_, in string final_label) => GenerateIf(*(NodeStatementIf*)&if_, final_label);
+		unsafe void GenerateElseIf(NodeIfPredicateElseIf if_, in string final_label) {
+			GenerateIf(*(NodeStatementIf*)&if_, final_label);
+		}
 
-        foreach (NodeStatement nodesStatement in root.statements) {
+		foreach (NodeStatement nodesStatement in root.statements) {
 			GenerateStatement(nodesStatement);
 		}
 
@@ -208,6 +210,6 @@ static class Generator {
 		output += "\tmov rdi, 0\n";
 		output += "\tsyscall";
 
-		return output.Trim();
+		return output;
 	}
 }

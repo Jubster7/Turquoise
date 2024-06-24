@@ -12,7 +12,7 @@ class Program {
 
 	const string assembler_command = @"nasm -f macho64 " + out_file_path;
 	const string linker_command = @"gcc -arch x86_64 -o " + out_executable_file_path + " " + out_object_file_path;
-	static readonly bool throw_on_compile_error = false;
+	const bool throw_on_compile_error = false;
 
 	static void Main(string[] args) {
 		if (args.Length == 1) {
@@ -30,6 +30,7 @@ class Program {
 
 		ExecuteCommand(assembler_command + " && " + linker_command);
 	}
+
 	/// <summary>
 	///	Compiles the string input into a assembly program
 	/// </summary>
@@ -41,6 +42,7 @@ class Program {
 		NodeProgram program = Parser.Parse(tokens);
 		return Generator.Generate(program);
 	}
+
 	/// <summary>
 	/// Executes the specified command in the command line
 	/// </summary>
@@ -64,6 +66,7 @@ class Program {
 		if (!string.IsNullOrEmpty(error)) Console.WriteLine($"Command Error: {error}");
 		process.WaitForExit();
 	}
+
 	/// <summary>
 	/// Exits the program with the specified error message including line and column numbers
 	/// </summary>
@@ -80,6 +83,7 @@ class Program {
 			Exit(1);
 		}
 	}
+
 	/// <summary>
 	/// Exits the program with the specified error message
 	/// </summary>
