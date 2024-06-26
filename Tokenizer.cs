@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Diagnostics.Contracts;
 
 #pragma warning disable CS8629 // Nullable value type may be null.
@@ -114,10 +113,10 @@ static class Tokenizer {
 	/// <returns>The corresponding type and value of the string as a Token</returns>
 	[Pure] public static Token ToToken(this string input, int line_number, int column_number) {
 		return input switch {
-			"exit" => new Token { type = TokenType.exit, value = null, line_number = line_number, column_number = column_number},
-			"var" => new Token { type = TokenType.var, value = null, line_number = line_number, column_number = column_number},
-			"if" => new Token { type = TokenType.if_, value = null, line_number = line_number, column_number = column_number},
-			"else" => new Token { type = TokenType.else_, value = null, line_number = line_number, column_number = column_number},
+			"exit" => new Token { type = TokenType.exit, line_number = line_number, column_number = column_number},
+			"var" => new Token { type = TokenType.var, line_number = line_number, column_number = column_number},
+			"if" => new Token { type = TokenType.if_, line_number = line_number, column_number = column_number},
+			"else" => new Token { type = TokenType.else_, line_number = line_number, column_number = column_number},
 			_ => new Token { type = TokenType.identifier, value = input, line_number = line_number, column_number = column_number},
 		};
 	}

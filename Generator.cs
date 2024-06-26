@@ -27,10 +27,10 @@ static class Generator {
 
 		unsafe void GenerateTerm(in NodeTerm nodeTerm) {
 			nodeTerm.term.Switch(
-				NodeTermIntLiteral => {
+				(NodeTermIntLiteral NodeTermIntLiteral) => {
 					push(NodeTermIntLiteral.int_literal.value);
 				},
-				NodeTermIdentifier => {
+				(NodeTermIdentifier) => {
 					var identifier_value = NodeTermIdentifier.identifier.value;
 					var values = variables.FindAll(variable => variable.name == identifier_value);
 					if (values.Count != 1) {
@@ -39,7 +39,7 @@ static class Generator {
 					}
 					push("QWORD [rsp + " + (stack_size - values[0].stack_location - 1) * 8 + "]");
 				},
-				NodeTermParentheses => {
+				(NodeTermParentheses) => {
 					GenerateExpression(*NodeTermParentheses.expression);
 				}
 			);
@@ -47,7 +47,7 @@ static class Generator {
 
 		unsafe void GenerateBinaryExpression(in NodeBinaryExpression binaryExpression) {
 			binaryExpression.binary_expression.Switch(
-				NodeBinaryExpressionAddition => {
+				(NodeBinaryExpressionAddition NodeBinaryExpressionAddition) => {
 					GenerateExpression(*NodeBinaryExpressionAddition.rhs);
 					GenerateExpression(*NodeBinaryExpressionAddition.lhs);
 					pop("rax");
@@ -55,7 +55,7 @@ static class Generator {
 					output += "\tadd rax, rbx\n";
 					push("rax");
 				},
-				NodeBinaryExpressionSubtraction => {
+				(NodeBinaryExpressionSubtraction NodeBinaryExpressionSubtraction) => {
 					GenerateExpression(*NodeBinaryExpressionSubtraction.rhs);
 					GenerateExpression(*NodeBinaryExpressionSubtraction.lhs);
 					pop("rax");
@@ -63,7 +63,7 @@ static class Generator {
 					output += "\tsub rax, rbx\n";
 					push("rax");
 				},
-				NodeBinaryExpressionMultiplication => {
+				(NodeBinaryExpressionMultiplication NodeBinaryExpressionMultiplication) => {
 					GenerateExpression(*NodeBinaryExpressionMultiplication.rhs);
 					GenerateExpression(*NodeBinaryExpressionMultiplication.lhs);
 					pop("rax");
@@ -71,7 +71,7 @@ static class Generator {
 					output += "\tmul rbx\n";
 					push("rax");
 				},
-				NodeBinaryExpressionDivision => {
+				(NodeBinaryExpressionDivision NodeBinaryExpressionDivision) => {
 					GenerateExpression(*NodeBinaryExpressionDivision.rhs);
 					GenerateExpression(*NodeBinaryExpressionDivision.lhs);
 					pop("rax");
@@ -85,10 +85,10 @@ static class Generator {
 
 		void GenerateExpression(in NodeExpression nodeExpression) {
 			nodeExpression.expression.Switch(
-				NodeTerm => {
+				(NodeTerm NodeTerm) => {
 					GenerateTerm(NodeTerm);
 				},
-				NodeBinaryExpression => {
+				(NodeBinaryExpression NodeBinaryExpression) => {
 					GenerateBinaryExpression(NodeBinaryExpression);
 				}
 			);
@@ -132,10 +132,10 @@ static class Generator {
 
 		unsafe void GenerateIfPredicate(in NodeIfPredicate predicate, string final_label) {
 			predicate.predicate.Switch(
-				NodeIfPredicateElseIf => {
+				(NodeIfPredicateElseIf NodeIfPredicateElseIf) => {
 					GenerateElseIf(NodeIfPredicateElseIf, final_label);
 				},
-				NodeIfPredicateElse => {
+				(NodeIfPredicateElse NodeIfPredicateElse) => {
 					if (NodeIfPredicateElse.statement != null) {
 						GenerateStatement(*NodeIfPredicateElse.statement);
 					}
@@ -145,13 +145,13 @@ static class Generator {
 
 		void GenerateStatement(in NodeStatement nodesStatement) {
 			nodesStatement.statement.Switch(
-				NodeStatementExit => {
+				(NodeStatementExit NodeStatementExit) => {
 					GenerateExpression(NodeStatementExit.expression);
 					output += "\tmov rax, " + (int)SystemCall.exit + "\n";
 					pop("rdi");
 					output += "\tsyscall\n";
 				},
-				NodeStatementVar => {
+				(NodeStatementVar NodeStatementVar) => {
 					var identifier_value = NodeStatementVar.identifier.value;
 					var values = variables.FindAll(variable => variable.name == identifier_value);
 					if (values.Count > 0) {
@@ -161,15 +161,15 @@ static class Generator {
 					variables.Add(new Variable { name = identifier_value + "", stack_location = stack_size });
 					GenerateExpression(NodeStatementVar.expression);
 				},
-				NodeScope => {
+				(NodeScope NodeScope) => {
 					GenerateScope(NodeScope);
 				},
-				NodeStatementIf => {
+				(NodeStatementIf NodeStatementIf) => {
 					string final_label = create_label();
 					GenerateIf(NodeStatementIf, final_label);
 					output += final_label + ":\n";
 				},
-				NodeStatementAssign => {
+				(NodeStatementAssign NodeStatementAssign) => {
 					string? identifier_value = NodeStatementAssign.identifier.value;
 					var values = variables.FindAll(variable => variable.name == identifier_value);
 					if (values.Count == 0) {
@@ -180,7 +180,7 @@ static class Generator {
 					pop("rax");
 					output += "\tmov [rsp + " + (stack_size - values[0].stack_location - 1) * 8 + " ], rax\n";
 				},
-				NodeStatementEmpty => {}
+				(NodeStatementEmpty NodeStatementEmpty) => {}
 			);
 		}
 
