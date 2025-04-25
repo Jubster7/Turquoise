@@ -6,130 +6,130 @@ using OneOf;
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 
 namespace Turquoise;
+
 struct NodeTermIntLiteral() {
-	public Token int_literal;
+	public Token Int_literal;
 }
 
 struct NodeTermIdentifier() {
-	public Token identifier;
+	public Token Identifier;
 }
 
 unsafe struct NodeBinaryExpressionAddition {
-	public NodeExpression* lhs;
-	public NodeExpression* rhs;
+	public NodeExpression* Lhs;
+	public NodeExpression* Rhs;
 }
 
 unsafe struct NodeBinaryExpressionSubtraction {
-	public NodeExpression* lhs;
-	public NodeExpression* rhs;
+	public NodeExpression* Lhs;
+	public NodeExpression* Rhs;
 }
 
 unsafe struct NodeBinaryExpressionMultiplication {
-	public NodeExpression* lhs;
-	public NodeExpression* rhs;
+	public NodeExpression* Lhs;
+	public NodeExpression* Rhs;
 }
 
 unsafe struct NodeBinaryExpressionDivision {
-	public NodeExpression* lhs;
-	public NodeExpression* rhs;
+	public NodeExpression* Lhs;
+	public NodeExpression* Rhs;
 }
 
 struct NodeBinaryExpression {
-	public OneOf<NodeBinaryExpressionAddition, NodeBinaryExpressionSubtraction, NodeBinaryExpressionMultiplication, NodeBinaryExpressionDivision>  binary_expression;
+	public OneOf<NodeBinaryExpressionAddition, NodeBinaryExpressionSubtraction, NodeBinaryExpressionMultiplication, NodeBinaryExpressionDivision> Binary_expression;
 }
 
 struct NodeTerm {
-	public OneOf<NodeTermIntLiteral, NodeTermIdentifier, NodeTermParentheses> term;
+	public OneOf<NodeTermIntLiteral, NodeTermIdentifier, NodeTermParentheses> Term;
 }
 
 unsafe struct NodeTermParentheses {
-	public NodeExpression* expression;
+	public NodeExpression* Expression;
 }
 
 struct NodeExpression {
-	public OneOf<NodeTerm, NodeBinaryExpression> expression;
+	public OneOf<NodeTerm, NodeBinaryExpression> Expression;
 }
 
 struct NodeStatementExit {
-	public NodeExpression expression;
+	public NodeExpression Expression;
 }
 
 struct NodeScope {
-	public List<NodeStatement> statements;
+	public List<NodeStatement> Statements;
 }
 
 unsafe struct NodeIfPredicateElseIf {
-	public NodeExpression expression;
-	public NodeStatement* statement;
-	public NodeIfPredicate?* predicate;
+	public NodeExpression Expression;
+	public NodeStatement* Statement;
+	public NodeIfPredicate?* Predicate;
 }
 
 unsafe struct NodeIfPredicateElse {
-	public NodeStatement* statement;
+	public NodeStatement* Statement;
 }
 
 struct NodeIfPredicate {
-	public OneOf<NodeIfPredicateElseIf, NodeIfPredicateElse> predicate;
+	public OneOf<NodeIfPredicateElseIf, NodeIfPredicateElse> Predicate;
 }
 
 unsafe struct NodeStatementIf {
-	public NodeExpression expression;
-	public NodeStatement* statement;
-	public NodeIfPredicate?* predicate;
+	public NodeExpression Expression;
+	public NodeStatement* Statement;
+	public NodeIfPredicate?* Predicate;
 }
 
 struct NodeStatementAssign {
-	public Token identifier;
-	public NodeExpression expression;
+	public Token Identifier;
+	public NodeExpression Expression;
 }
 
 struct NodeStatementEmpty;
 
 struct NodeStatement {
-	public OneOf<NodeStatementExit, NodeStatementVar, NodeScope, NodeStatementIf, NodeStatementAssign, NodeStatementEmpty> statement;
+	public OneOf<NodeStatementExit, NodeStatementVar, NodeScope, NodeStatementIf, NodeStatementAssign, NodeStatementEmpty> Statement;
 }
 
 struct NodeStatementVar {
-	public Token identifier;
-	public NodeExpression expression;
+	public Token Identifier;
+	public NodeExpression Expression;
 }
 
 struct NodeProgram() {
-	public List<NodeStatement> statements;
+	public required List<NodeStatement> Statements;
 }
 
 static class Parser {
-	private static unsafe T* Allocate<T>(in T value) {
-		var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
-		*ptr = value;
-		return ptr;
-	}
-
-	private static unsafe T* Allocate<T>() {
-		return (T*)Marshal.AllocCoTaskMem(sizeof(T));
-	}
 
 	public static NodeProgram Parse(List<Token> tokens) {
 		int index = 0;
-		NodeProgram program = new NodeProgram{statements = []};
+		NodeProgram program = new NodeProgram { Statements = [] };
+
+		while (Peek().HasValue) {
+			NodeStatement? statement = ParseStatement();
+			if (statement.HasValue) {
+				program.Statements.Add(statement.Value);
+			}
+		}
+		return program;
 
 		unsafe NodeTerm? ParseTerm() {
-			if (try_consume_out(TokenType.int_literal, out Token? int_literal)) {
-				return new NodeTerm{term = new NodeTermIntLiteral{int_literal = int_literal.Value}};
+			if (Try_consume_out(TokenType.int_literal, out Token? int_literal)) {
+				return new NodeTerm { Term = new NodeTermIntLiteral { Int_literal = int_literal.Value } };
 			}
-			if (try_consume_out(TokenType.identifier, out Token? identifier)) {
-				return new NodeTerm{term = new NodeTermIdentifier{identifier = identifier.Value}};
+			if (Try_consume_out(TokenType.identifier, out Token? identifier)) {
+				return new NodeTerm { Term = new NodeTermIdentifier { Identifier = identifier.Value } };
 			}
-			if (try_consume_out(TokenType.open_parentheses, out Token? open_parentheses)) {
+			if (Try_consume_out(TokenType.open_parentheses, out Token? open_parentheses)) {
 				var expression = ParseExpression();
 				if (!expression.HasValue) {
 					ErrorExpected("expression");
 				}
 
-				var term_parentheses = new NodeTermParentheses { expression = Allocate(expression.Value) };
+				var term_parentheses = new NodeTermParentheses { Expression = Allocate(expression.Value) };
 
-				try_consume_error(TokenType.close_parentheses);
-				return new NodeTerm {term = term_parentheses};
+				Try_consume_error(TokenType.close_parentheses);
+				return new NodeTerm { Term = term_parentheses };
 			}
 			return null;
 		}
@@ -137,10 +137,10 @@ static class Parser {
 		unsafe NodeExpression? ParseExpression(in int min_precedence = 0) {
 			NodeTerm? term_lhs = ParseTerm();
 			if (!term_lhs.HasValue) return null;
-			var expression_lhs = new NodeExpression{expression = term_lhs.Value};
+			var expression_lhs = new NodeExpression { Expression = term_lhs.Value };
 
 			while (true) {
-				Token? current_token = peek();
+				Token? current_token = Peek();
 				int? precedence;
 				if (current_token.HasValue) {
 					precedence = current_token.Value.type.OperatorPrecedence();
@@ -150,7 +150,7 @@ static class Parser {
 				}
 
 				int next_min_precedence = precedence.Value + 1;
-				TokenType type = consume().type;
+				TokenType type = Consume().type;
 				var expression_rhs = ParseExpression(next_min_precedence);
 
 				if (!expression_rhs.HasValue) {
@@ -159,155 +159,155 @@ static class Parser {
 
 				var expression = new NodeBinaryExpression();
 				if (type == TokenType.plus) {
-					expression.binary_expression = new NodeBinaryExpressionAddition {
-						lhs = Allocate(expression_lhs),
-						rhs = Allocate(expression_rhs.Value)
+					expression.Binary_expression = new NodeBinaryExpressionAddition {
+						Lhs = Allocate(expression_lhs),
+						Rhs = Allocate(expression_rhs.Value)
 					};
 				} else if (type == TokenType.asterisk) {
-					expression.binary_expression = new NodeBinaryExpressionMultiplication {
-						lhs = Allocate(expression_lhs),
-						rhs = Allocate(expression_rhs.Value)
+					expression.Binary_expression = new NodeBinaryExpressionMultiplication {
+						Lhs = Allocate(expression_lhs),
+						Rhs = Allocate(expression_rhs.Value)
 					};
 				} else if (type == TokenType.minus) {
-					expression.binary_expression = new NodeBinaryExpressionSubtraction {
-						lhs = Allocate(expression_lhs),
-						rhs = Allocate(expression_rhs.Value)
+					expression.Binary_expression = new NodeBinaryExpressionSubtraction {
+						Lhs = Allocate(expression_lhs),
+						Rhs = Allocate(expression_rhs.Value)
 					};
 				} else if (type == TokenType.forward_slash) {
-					expression.binary_expression = new NodeBinaryExpressionDivision {
-						lhs = Allocate(expression_lhs),
-						rhs = Allocate(expression_rhs.Value)
+					expression.Binary_expression = new NodeBinaryExpressionDivision {
+						Lhs = Allocate(expression_lhs),
+						Rhs = Allocate(expression_rhs.Value)
 					};
 				} else {
 					Error("parsing of " + type.Name() + " operator not defined");
 				}
-				expression_lhs.expression = expression;
+				expression_lhs.Expression = expression;
 			}
 			return expression_lhs;
 		}
 
 		NodeScope? ParseScope() {
-			if (!try_consume(TokenType.open_brace)) {
+			if (!Try_consume(TokenType.open_brace)) {
 				return null;
 			}
 
-			var scope = new NodeScope{statements = []};
+			var scope = new NodeScope { Statements = [] };
 			NodeStatement? statement;
 			while ((statement = ParseStatement(in_scope: true)).HasValue) {
-				scope.statements.Add(statement.Value);
+				scope.Statements.Add(statement.Value);
 			}
 
-			try_consume_error(TokenType.close_brace);
+			Try_consume_error(TokenType.close_brace);
 			return scope;
 		}
 
 		unsafe NodeIfPredicate? ParseIfPredicate() {
-			if (try_consume(TokenType.else_)) {
-				if (try_consume(TokenType.if_)) {
-					try_consume_error(TokenType.open_parentheses);
-					NodeIfPredicateElseIf else_if_predicate = new NodeIfPredicateElseIf {};
+			if (Try_consume(TokenType.else_)) {
+				if (Try_consume(TokenType.if_)) {
+					Try_consume_error(TokenType.open_parentheses);
+					NodeIfPredicateElseIf else_if_predicate = new NodeIfPredicateElseIf { };
 					var expression = ParseExpression();
 					if (expression.HasValue) {
-						else_if_predicate.expression = expression.Value;
+						else_if_predicate.Expression = expression.Value;
 					} else {
 						ErrorExpected("expression");
 					}
-					try_consume_error(TokenType.close_parentheses);
+					Try_consume_error(TokenType.close_parentheses);
 					var else_if_statement = ParseStatement();
 					if (else_if_statement.HasValue) {
-						else_if_predicate.statement = Allocate(else_if_statement.Value);
+						else_if_predicate.Statement = Allocate(else_if_statement.Value);
 					}
-					else_if_predicate.predicate = Allocate(ParseIfPredicate());
-					return new NodeIfPredicate{predicate = else_if_predicate};
+					else_if_predicate.Predicate = Allocate(ParseIfPredicate());
+					return new NodeIfPredicate { Predicate = else_if_predicate };
 				}
 				var else_predicate = new NodeIfPredicateElse();
 				var else_statement = ParseStatement();
 				if (else_statement.HasValue) {
-					else_predicate.statement = Allocate(else_statement.Value);
+					else_predicate.Statement = Allocate(else_statement.Value);
 				}
-				return new NodeIfPredicate{predicate = else_predicate};
+				return new NodeIfPredicate { Predicate = else_predicate };
 			}
 
 			return null;
 		}
 
 		NodeStatement? ParseStatement(in bool in_scope = false) {
-			if (try_consume(TokenType.exit)) {
-				try_consume_error(TokenType.open_parentheses);
-				NodeStatementExit statementExit;
+			if (Try_consume(TokenType.exit)) {
+				Try_consume_error(TokenType.open_parentheses);
+				NodeStatementExit statement_exit;
 				NodeExpression? expression;
-				if((expression = ParseExpression()).HasValue) {
-					statementExit = new NodeStatementExit {expression = expression.Value };
+				if ((expression = ParseExpression()).HasValue) {
+					statement_exit = new NodeStatementExit { Expression = expression.Value };
 				} else {
 					Error("Unable to parse Expression");
 					return null;
 				}
-				try_consume_error(TokenType.close_parentheses);
-				try_consume_error(TokenType.semicolon);
-				return new NodeStatement {statement = statementExit};
+				Try_consume_error(TokenType.close_parentheses);
+				Try_consume_error(TokenType.semicolon);
+				return new NodeStatement { Statement = statement_exit };
 			}
-			if (try_consume(TokenType.var)) {
+			if (Try_consume(TokenType.var)) {
 
-				var statement_identifier = try_consume_error(TokenType.identifier);
+				var statement_identifier = Try_consume_error(TokenType.identifier);
 
-				try_consume_error(TokenType.equals);
+				Try_consume_error(TokenType.equals);
 
-				NodeStatementVar statementVar = new NodeStatementVar {identifier = statement_identifier};
+				NodeStatementVar statementVar = new NodeStatementVar { Identifier = statement_identifier };
 
 				NodeExpression? expression = ParseExpression();
 				if (expression.HasValue) {
-					statementVar.expression = expression.Value;
+					statementVar.Expression = expression.Value;
 				} else {
 					Error("Invalid Expression");
 				}
 
-				try_consume_error(TokenType.semicolon);
-				return new NodeStatement {statement = statementVar};
+				Try_consume_error(TokenType.semicolon);
+				return new NodeStatement { Statement = statementVar };
 			}
-			if (peek().HasValue && peek().Value.type == TokenType.identifier && peek(1).HasValue && peek(1).Value.type == TokenType.equals) {
-				var assign = new NodeStatementAssign{identifier = consume()};
-				consume();
+			if (Peek().HasValue && Peek().Value.type == TokenType.identifier && Peek(1).HasValue && Peek(1).Value.type == TokenType.equals) {
+				var assign = new NodeStatementAssign { Identifier = Consume() };
+				Consume();
 				var expression = ParseExpression();
 				if (expression.HasValue) {
-					assign.expression = expression.Value;
+					assign.Expression = expression.Value;
 				} else {
 					ErrorExpected("expression");
 				}
-				try_consume_error(TokenType.semicolon);
-				return new NodeStatement {statement = assign};
+				Try_consume_error(TokenType.semicolon);
+				return new NodeStatement { Statement = assign };
 			}
-			if (peek().HasValue && peek().Value.type == TokenType.open_brace) {
+			if (Peek().HasValue && Peek().Value.type == TokenType.open_brace) {
 				var scope = ParseScope();
 				if (!scope.HasValue) {
 					ErrorExpectedToken(TokenType.open_brace);
 				}
-				return new NodeStatement{statement = scope.Value};
+				return new NodeStatement { Statement = scope.Value };
 			}
-			if (try_consume_out(TokenType.if_, out var if_)) unsafe {
-				try_consume_error(TokenType.open_parentheses);
-				var expression = ParseExpression();
-				if (!expression.HasValue) {
-					ErrorExpected("expression");
+			if (Try_consume_out(TokenType.if_, out var if_)) unsafe {
+					Try_consume_error(TokenType.open_parentheses);
+					var expression = ParseExpression();
+					if (!expression.HasValue) {
+						ErrorExpected("expression");
+					}
+					var statement_if = new NodeStatementIf { Expression = expression.Value };
+					Try_consume_error(TokenType.close_parentheses);
+					var statement = ParseStatement();
+					if (statement.HasValue) {
+						if (statement.Value.Statement.IsT1) Error("Variable declaration not allowed on non scoped if statements");
+						statement_if.Statement = Allocate(statement.Value);
+					}
+					statement_if.Predicate = Allocate(ParseIfPredicate());
+					return new NodeStatement { Statement = statement_if };
 				}
-				var statement_if = new NodeStatementIf{expression = expression.Value};
-				try_consume_error(TokenType.close_parentheses);
-				var statement = ParseStatement();
-				if (statement.HasValue) {
-					if (statement.Value.statement.IsT1) Error("Variable declaration not allowed on non scoped if statements");
-					statement_if.statement = Allocate(statement.Value);
-				}
-				statement_if.predicate = Allocate(ParseIfPredicate());
-				return new NodeStatement {statement = statement_if};
+			if (Peek().HasValue && Peek().Value.type == TokenType.semicolon) {
+				Consume();
+				return new NodeStatement { Statement = new NodeStatementEmpty() };
 			}
-			if (peek().HasValue && peek().Value.type == TokenType.semicolon) {
-				consume();
-				return new NodeStatement{statement = new NodeStatementEmpty()};
-			}
-			if (peek().HasValue && peek().Value.type == TokenType.close_brace && in_scope) {
+			if (Peek().HasValue && Peek().Value.type == TokenType.close_brace && in_scope) {
 				return null;
 			}
-			if (peek().HasValue) {
-				Error("Statement cannot start with " + peek().Value.type.Name());
+			if (Peek().HasValue) {
+				Error("Statement cannot start with " + Peek().Value.type.Name());
 				return null;
 			} else {
 				ErrorExpectedToken(TokenType.close_brace);
@@ -315,35 +315,35 @@ static class Parser {
 			}
 		}
 
-		[Pure] Token? peek(in int offset = 0) {
+		[Pure] Token? Peek(in int offset = 0) {
 			if (index + offset >= tokens.Count) {
 				return null;
 			}
 			return tokens[index + offset];
 		}
 
-		Token consume() {
+		Token Consume() {
 			return tokens[index++];
 		}
 
-		Token try_consume_error(in TokenType tokenType) {
-			if (!(peek().HasValue && peek().Value.type == tokenType)) {
+		Token Try_consume_error(in TokenType tokenType) {
+			if (!(Peek().HasValue && Peek().Value.type == tokenType)) {
 				ErrorExpectedToken(tokenType);
 			}
-			return consume();
+			return Consume();
 		}
 
- 		bool try_consume(in TokenType tokenType) {
-			if (peek().HasValue && peek().Value.type == tokenType) {
-				consume();
+		bool Try_consume(in TokenType tokenType) {
+			if (Peek().HasValue && Peek().Value.type == tokenType) {
+				Consume();
 				return true;
 			}
 			return false;
 		}
 
-		bool try_consume_out(in TokenType tokenType, out Token? token) {
-			if (peek().HasValue && peek().Value.type == tokenType) {
-				token = consume();
+		bool Try_consume_out(in TokenType tokenType, out Token? token) {
+			if (Peek().HasValue && Peek().Value.type == tokenType) {
+				token = Consume();
 				return true;
 			}
 			token = null;
@@ -351,7 +351,7 @@ static class Parser {
 		}
 
 		void Error(in string error_message) {
-			var (line_number, column_number, _) = peek() ?? tokens.Last();
+			var (line_number, column_number, _) = Peek() ?? tokens.Last();
 			Program.Error(error_message, line_number, column_number);
 		}
 
@@ -362,13 +362,15 @@ static class Parser {
 		void ErrorExpectedToken(in TokenType expected_token) {
 			Error("Expected " + expected_token.Name());
 		}
+	}
 
-		while (peek().HasValue) {
-			NodeStatement? statement = ParseStatement();
-			if (statement.HasValue) {
-				program.statements.Add(statement.Value);
-			}
-		}
-		return program;
+	private static unsafe T* Allocate<T>(in T value) {
+		var ptr = (T*)Marshal.AllocCoTaskMem(sizeof(T));
+		*ptr = value;
+		return ptr;
+	}
+
+	private static unsafe T* Allocate<T>() {
+		return (T*)Marshal.AllocCoTaskMem(sizeof(T));
 	}
 }

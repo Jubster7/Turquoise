@@ -13,15 +13,15 @@ if (0) ; else if (1) exit(10);
 	;;;;;
 	exit(x);
 
-/* TODO
-unary operators
-reassignment operators
-functions / () operator
-booleans
-comparison operators
-strings
-text output
-text input
-other types
-pointers & arrays
+/* Todo List
+	strings
+	text output
+	unary operators
+	reassignment operators
+	functions / () operator
+	booleans
+	comparison operators
+	text input
+	types
+	pointers & arrays
 */

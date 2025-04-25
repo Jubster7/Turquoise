@@ -1,18 +1,23 @@
 $$
 \begin{align*}
 
-\text{Program} &\to [\text{statement}]^* \\
+\text{Program} &\to \begin{cases}
+	[\text{statement}]^*
+\end{cases} \\
 
 [\text{Statement}] &\to
 \begin{cases}
 	\text{exit}([\text{Expression}]); \\
 	\text{var}\space [\text{identifier}] = [\text{Expression}];\\
 	[\text{identifier}] = [\text{Expression}];\\
-	\text{if}([\text{Expression}]) [\text{statement}]\quad [\text{else if}([\text{Expression}])[statement]]^*\quad \text{else} [\text{statement}]^?\\
+	\text{if}([\text{Expression}]) [\text{statement}]\quad [\text{else if}([\text{Expression}])[\text{statement}]]^*\quad [\text{else} [\text{statement}]]^?\\
 	[\text{Scope}]
 \end{cases}\\
 
-[\text{Scope}] &\to \{[\text{statement}]^*\}\\
+[\text{Scope}] &\to
+\begin{cases}
+	[\text{statement}]^*\\
+\end{cases}\ \\
 
 [\text{Expression}] &\to
 \begin{cases}
@@ -34,7 +39,7 @@ $$
 \begin{cases}
 	[\text{int\_literal}]\\
 	[\text{identifier}] \\
-	(\text{Expression})
+	[\text{Expression}]
 \end{cases}
 
 
